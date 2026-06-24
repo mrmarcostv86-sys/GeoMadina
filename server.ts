@@ -645,6 +645,12 @@ app.post("/api/auth/login", (req, res) => {
     return res.status(403).json({ error: "Your account is suspended. Contact administrator." });
   }
 
+  // If maintenance mode is active, only Admin roles are allowed to enter
+  const isAdmin = email.toLowerCase().includes("admin") || email.toLowerCase().includes("benjelloun");
+  if (db.adminSettings?.maintenanceMode && !isAdmin) {
+    return res.status(403).json({ error: "Le portail est actuellement en mode maintenance. L'accès est réservé exclusivement aux administrateurs." });
+  }
+
   user.lastLogin = new Date().toISOString().replace("T", " ").substring(0, 16);
   saveDb(db);
   logAction("User login", email);
