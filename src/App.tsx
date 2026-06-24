@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Project, Point, CADLine, AppUser, AdminSettings, Projection } from "./types";
 import { motion, AnimatePresence } from "motion/react";
+import { 
+  auth as firebaseAuth, 
+  googleProvider, 
+  signInWithPopup, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  updateProfile,
+  signOut as firebaseSignOut
+} from "./firebase";
 import {
   FolderKanban,
   FileSpreadsheet,
@@ -53,6 +62,10 @@ export default function App() {
   } | null>(null);
 
   const [authEmail, setAuthEmail] = useState("alami.survey@gmail.com");
+  const [authPassword, setAuthPassword] = useState("password");
+  const [authName, setAuthName] = useState("");
+  const [authPhone, setAuthPhone] = useState("+212 660-000000");
+  const [isSignUp, setIsSignUp] = useState(false);
   const [authError, setAuthError] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
@@ -196,6 +209,119 @@ export default function App() {
     return () => clearInterval(interval);
   }, [currentUser?.email]);
 
+  const handleFirebaseSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    try {
+      const userCredential = await createUserWithEmailAndPassword(firebaseAuth, authEmail, authPassword);
+      const fbUser = userCredential.user;
+      
+      await updateProfile(fbUser, { displayName: authName || authEmail.split("@")[0] });
+      
+      const syncRes = await fetch("/api/auth/firebase-sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: fbUser.email,
+          name: authName || fbUser.displayName,
+          uid: fbUser.uid
+        })
+      });
+      
+      if (syncRes.ok) {
+        const data = await syncRes.json();
+        setCurrentUser(data.user);
+      } else {
+        const errData = await syncRes.json();
+        setAuthError(errData.error || "La synchronisation avec le serveur a échoué.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === "auth/email-already-in-use") {
+        setAuthError("Cet e-mail est déjà utilisé. Essayez de vous connecter.");
+      } else if (err.code === "auth/weak-password") {
+        setAuthError("Le mot de passe doit contenir au moins 6 caractères.");
+      } else {
+        setAuthError(err.message || "L'inscription a échoué. Veuillez réessayer.");
+      }
+    }
+  };
+
+  const handleFirebaseSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    try {
+      const userCredential = await signInWithEmailAndPassword(firebaseAuth, authEmail, authPassword);
+      const fbUser = userCredential.user;
+      
+      const syncRes = await fetch("/api/auth/firebase-sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: fbUser.email,
+          name: fbUser.displayName,
+          uid: fbUser.uid
+        })
+      });
+      
+      if (syncRes.ok) {
+        const data = await syncRes.json();
+        setCurrentUser(data.user);
+      } else {
+        const errData = await syncRes.json();
+        setAuthError(errData.error || "La synchronisation avec le serveur a échoué.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      // Fallback for default local users (e.g. alami.survey@gmail.com with "password")
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: authEmail, password: authPassword })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+        } else {
+          const errData = await res.json();
+          setAuthError(errData.error || "E-mail ou mot de passe incorrect.");
+        }
+      } catch (fallbackErr) {
+        setAuthError("E-mail ou mot de passe incorrect.");
+      }
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setAuthError("");
+    try {
+      const result = await signInWithPopup(firebaseAuth, googleProvider);
+      const fbUser = result.user;
+      
+      const syncRes = await fetch("/api/auth/firebase-sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: fbUser.email,
+          name: fbUser.displayName,
+          uid: fbUser.uid
+        })
+      });
+      
+      if (syncRes.ok) {
+        const data = await syncRes.json();
+        setCurrentUser(data.user);
+      } else {
+        const errData = await syncRes.json();
+        setAuthError(errData.error || "La synchronisation Google a échoué.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setAuthError("Connexion Google annulée ou impossible : " + (err.message || ""));
+    }
+  };
+
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setAuthError("");
@@ -208,13 +334,19 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setCurrentUser(data.user);
-      } else {
-        const errData = await res.json();
-        setAuthError(errData.error || "Authentication failed");
       }
     } catch (err) {
-      setAuthError("Failed to communicate with Express backend.");
+      console.error("Autologin failed:", err);
     }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await firebaseSignOut(firebaseAuth);
+    } catch (err) {
+      console.error(err);
+    }
+    setCurrentUser(null);
   };
 
   const handleLogAction = async (action: string) => {
@@ -517,7 +649,7 @@ Printed under authority license of ONIGT.
             </div>
 
             <button
-              onClick={() => setCurrentUser(null)}
+              onClick={handleSignOut}
               className="p-2 hover:bg-red-950/30 text-red-400 rounded-lg border border-red-900/10 transition-colors cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
@@ -526,8 +658,7 @@ Printed under authority license of ONIGT.
         )}
       </header>
 
-      {/* Main Body */}
-      {!currentUser ? (
+          {!currentUser ? (
         <div className="flex-1 flex items-center justify-center p-6 bg-slate-950">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -539,7 +670,25 @@ Printed under authority license of ONIGT.
                 <Compass className="w-8 h-8 animate-spin-slow" />
               </div>
               <h2 className="text-2xl font-black text-white">{adminSettings?.brandingTitle || "GeoMadina Cloud Login"}</h2>
-              <p className="text-xs text-slate-400">{adminSettings?.loginSubtitle || "Authorized access for Licensed Moroccan Surveyors (IGT/ONIGT)"}</p>
+              <p className="text-xs text-slate-400">{adminSettings?.loginSubtitle || "Portail National de Topographie, CAD & Bornage"}</p>
+            </div>
+
+            {/* Inscription / Connexion Selector Tabs */}
+            <div className="grid grid-cols-2 p-1 bg-slate-950 rounded-xl border border-slate-850">
+              <button
+                type="button"
+                onClick={() => { setIsSignUp(false); setAuthError(""); }}
+                className={`py-2 text-xs font-bold rounded-lg transition-all ${!isSignUp ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"}`}
+              >
+                Connexion
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIsSignUp(true); setAuthError(""); }}
+                className={`py-2 text-xs font-bold rounded-lg transition-all ${isSignUp ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"}`}
+              >
+                Inscription (S'enregistrer)
+              </button>
             </div>
 
             {authError && (
@@ -548,9 +697,23 @@ Printed under authority license of ONIGT.
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={isSignUp ? handleFirebaseSignUp : handleFirebaseSignIn} className="space-y-4">
+              {isSignUp && (
+                <div className="space-y-1">
+                  <label className="block text-[10px] text-slate-400 font-mono uppercase">Nom Complet / Cabinet</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Cabinet Alami de Topographie"
+                    value={authName}
+                    onChange={e => setAuthName(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                  />
+                </div>
+              )}
+
               <div className="space-y-1">
-                <label className="block text-[10px] text-slate-400 font-mono uppercase">Surveyor Email address</label>
+                <label className="block text-[10px] text-slate-400 font-mono uppercase">Adresse E-mail du Topographe</label>
                 <input
                   type="email"
                   required
@@ -562,12 +725,13 @@ Printed under authority license of ONIGT.
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[10px] text-slate-400 font-mono uppercase">Encrypted CAD Access Key</label>
+                <label className="block text-[10px] text-slate-400 font-mono uppercase">Clé d'Accès Sécurisée (Mot de passe)</label>
                 <input
                   type="password"
                   required
                   placeholder="••••••••••••••"
-                  defaultValue="password"
+                  value={authPassword}
+                  onChange={e => setAuthPassword(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
                 />
               </div>
@@ -576,9 +740,71 @@ Printed under authority license of ONIGT.
                 type="submit"
                 className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-indigo-500/20 cursor-pointer text-sm"
               >
-                Secure JWT Authentication
+                {isSignUp ? "S'inscrire avec Firebase" : "Se Connecter en toute Sécurité"}
               </button>
             </form>
+
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-slate-850"></div>
+              <span className="flex-shrink mx-4 text-[10px] text-slate-500 font-mono uppercase">Ou</span>
+              <div className="flex-grow border-t border-slate-850"></div>
+            </div>
+
+            {/* Google / Gmail Authentication Option */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="w-full py-2.5 bg-[#17213C] hover:bg-[#1E2E55] border border-slate-800 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-3 cursor-pointer text-xs"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              S'authentifier avec Gmail / Google
+            </button>
+
+            {/* Quick Demo logins to preserve high developer/testing usability */}
+            <div className="pt-2">
+              <span className="block text-[9px] text-slate-500 font-mono text-center uppercase tracking-wider mb-2">Comptes Démo Rapides</span>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthEmail("alami.survey@gmail.com");
+                    setAuthPassword("password");
+                    setIsSignUp(false);
+                  }}
+                  className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 text-[10px] font-mono rounded-lg border border-slate-850 text-slate-300 transition-colors"
+                >
+                  Cabinet Alami
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthEmail("benjelloun.admin@toposuite.ma");
+                    setAuthPassword("password");
+                    setIsSignUp(false);
+                  }}
+                  className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 text-[10px] font-mono rounded-lg border border-slate-850 text-indigo-400 transition-colors font-bold"
+                >
+                  Admin Benjelloun
+                </button>
+              </div>
+            </div>
 
             <div className="pt-4 border-t border-slate-850 text-center text-[10px] text-slate-500 font-mono space-y-1">
               <span>Royaume du Maroc - Cadastre National</span>

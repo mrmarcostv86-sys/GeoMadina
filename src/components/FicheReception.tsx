@@ -38,7 +38,7 @@ interface LogoColumn {
   orgName: string;
   subtitle: string;
   preset: string;
-  logoType: "sc" | "btp" | "bet" | "mo" | "maroc" | "custom";
+  logoType: "bahi_najib" | "tgcc" | "bettan" | "anep" | "maroc" | "custom" | string;
   customImage: string | null;
 }
 
@@ -61,108 +61,126 @@ export default function FicheReception({
 }: FicheReceptionProps) {
   // Preset styles & colors for standard logos in geomatics/topography
   const PRESET_LOGOS = {
-    sc: {
-      bg: "bg-[#EF4444]",
-      textColor: "text-white",
-      abbr: "SC",
-      name: "SOCIÉTÉ DE CONTRÔLE EXT",
+    bahi_najib: {
+      bg: "bg-white",
+      textColor: "text-rose-600",
+      abbr: "BN",
+      name: "SOCIETE BAHI NAJIB",
       icon: (
-        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M9 11l3 3L22 4" />
-        </svg>
+        <div className="flex flex-col items-center">
+          <svg className="w-10 h-10" viewBox="0 0 100 100">
+            <rect x="5" y="5" width="90" height="90" rx="10" fill="#E11D48" />
+            <path d="M25 25 H75 V75 H25 Z" fill="none" stroke="white" strokeWidth="6" />
+            <path d="M25 50 H75 M50 25 V75" stroke="white" strokeWidth="4" />
+            <circle cx="50" cy="50" r="10" fill="white" />
+          </svg>
+        </div>
       )
     },
-    btp: {
-      bg: "bg-[#1E293B]",
-      textColor: "text-[#F59E0B]",
-      abbr: "BTP",
-      name: "ENTREPRISE TRAVAUX BTP",
+    tgcc: {
+      bg: "bg-white",
+      textColor: "text-slate-800",
+      abbr: "TGCC",
+      name: "TGCC CONSTRUISONS ENSEMBLE",
       icon: (
-        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M12 2L2 22h20L12 2z" />
-          <circle cx="12" cy="14" r="2" fill="currentColor" />
-        </svg>
+        <div className="flex flex-col items-center">
+          <svg className="w-10 h-10" viewBox="0 0 120 100">
+            <rect x="10" y="10" width="100" height="80" rx="5" fill="#1E293B" />
+            <path d="M20 25 L45 25 L45 35 L35 35 L35 75 L20 75 Z" fill="#EF4444" />
+            <path d="M50 25 L80 25 L80 35 L60 35 L60 45 L75 45 L75 55 L60 55 L60 75 L50 75 Z" fill="#FFFFFF" />
+            <path d="M85 25 L105 25 L105 35 L95 35 L95 75 L85 75 Z" fill="#EF4444" />
+          </svg>
+        </div>
       )
     },
-    bet: {
-      bg: "bg-[#0284C7]",
-      textColor: "text-white",
-      abbr: "BET",
-      name: "BUREAU D'ÉTUDES BET",
+    bettan: {
+      bg: "bg-white",
+      textColor: "text-cyan-700",
+      abbr: "BETTAN",
+      name: "AHMED NANA BET",
       icon: (
-        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 2v20M2 12h20" />
-          <circle cx="12" cy="12" r="4" fill="currentColor" fillOpacity="0.2" />
-        </svg>
+        <div className="flex flex-col items-center">
+          <svg className="w-12 h-10" viewBox="0 0 150 100">
+            <ellipse cx="75" cy="50" rx="65" ry="40" fill="none" stroke="#0891B2" strokeWidth="3" />
+            <circle cx="75" cy="50" r="25" fill="none" stroke="#0891B2" strokeWidth="2" strokeDasharray="4 2" />
+            <path d="M45 50 H105 M75 20 V80" stroke="#0891B2" strokeWidth="1.5" />
+            <text x="75" y="54" fontSize="11" fontWeight="bold" fill="#0891B2" textAnchor="middle">BETTAN</text>
+          </svg>
+        </div>
       )
     },
-    mo: {
-      bg: "bg-[#10B981]",
-      textColor: "text-white",
-      abbr: "M.O",
-      name: "M.O DÉLÉGUÉ NATIONAL",
+    anep: {
+      bg: "bg-white",
+      textColor: "text-blue-900",
+      abbr: "ANEP",
+      name: "ANEP DELEGUE",
       icon: (
-        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M3 21h18M3 10h18M5 10V4a1 1 0 011-1h12a1 1 0 011 1v6M9 21v-4a1 1 0 011-1h4a1 1 0 011 1v4" />
-        </svg>
+        <div className="flex flex-col items-center">
+          <svg className="w-12 h-10" viewBox="0 0 140 100">
+            <path d="M10 50 Q40 20 70 50 Q100 80 130 50 Q100 20 70 50 Q40 80 10 50" fill="none" stroke="#1D4ED8" strokeWidth="3" />
+            <circle cx="70" cy="50" r="12" fill="#1D4ED8" />
+            <text x="70" y="85" fontSize="12" fontWeight="extrabold" fill="#1D4ED8" textAnchor="middle">ANEP</text>
+          </svg>
+        </div>
       )
     },
     maroc: {
-      bg: "bg-[#064E3B]",
-      textColor: "text-[#FBBF24]",
+      bg: "bg-white",
+      textColor: "text-emerald-850",
       abbr: "MAROC",
-      name: "Royaume du Maroc",
+      name: "ROYAUME DU MAROC",
       icon: (
-        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 3l2.5 6h6.5l-5 4 2 6.5-6-4.5-6 4.5 2-6.5-5-4h6.5z" fill="currentColor" />
-        </svg>
+        <div className="flex flex-col items-center">
+          <svg className="w-10 h-10" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#D97706" strokeWidth="2" />
+            <polygon points="50,15 58,38 83,38 63,53 71,76 50,61 29,76 37,53 17,38 42,38" fill="#10B981" stroke="#D97706" strokeWidth="1.5" />
+            <circle cx="50" cy="50" r="5" fill="#EF4444" />
+          </svg>
+        </div>
       )
     }
   };
 
-  // 1. Column Logos Config
+  // 1. Column Logos Config - Populated to match the user's template exactly
   const [logoColumns, setLogoColumns] = useState<LogoColumn[]>([
     {
-      sectionHeader: "Maître d'Ouvrage",
-      orgName: "Ministère de l'Équipement",
-      subtitle: "M.O Principal",
+      sectionHeader: "SOCIETE BAHI NAJIB",
+      orgName: "BAHI NAJIB SARL",
+      subtitle: "Cabinet Topographique Agrée",
+      preset: "BAHI NAJIB",
+      logoType: "bahi_najib",
+      customImage: null
+    },
+    {
+      sectionHeader: "Entreprise",
+      orgName: "Entreprise TGCC",
+      subtitle: "Construisons Ensemble",
+      preset: "TGCC",
+      logoType: "tgcc",
+      customImage: null
+    },
+    {
+      sectionHeader: "Contrôle externe",
+      orgName: "B.E.T AHMED NANA",
+      subtitle: "Bureau d'Etude Topographique",
+      preset: "BETTAN AHMED NANA",
+      logoType: "bettan",
+      customImage: null
+    },
+    {
+      sectionHeader: "Maitre d'Ouvrage Délégué",
+      orgName: "ANEP",
+      subtitle: "Agence Nationale Equipement",
+      preset: "ANEP",
+      logoType: "anep",
+      customImage: null
+    },
+    {
+      sectionHeader: "Maitre d'Ouvrage",
+      orgName: "Royaume du Maroc",
+      subtitle: "Ministère de l'Éducation Nationale",
       preset: "Royaume du Maroc",
       logoType: "maroc",
-      customImage: null
-    },
-    {
-      sectionHeader: "Maître d'Ouvrage Délégué",
-      orgName: "Société Al Omrane",
-      subtitle: "M.O Délégué",
-      preset: "M.O DÉLÉGUÉ NATIONAL",
-      logoType: "mo",
-      customImage: null
-    },
-    {
-      sectionHeader: "Contrôle Externe",
-      orgName: "Bureau d'Etudes Techniques",
-      subtitle: "B.E.T Agrée",
-      preset: "BUREAU D'ÉTUDES BET",
-      logoType: "bet",
-      customImage: null
-    },
-    {
-      sectionHeader: "Entreprise de Travaux",
-      orgName: "SOCOTRAP S.A.",
-      subtitle: "Entreprise BTP",
-      preset: "ENTREPRISE TRAVAUX BTP",
-      logoType: "btp",
-      customImage: null
-    },
-    {
-      sectionHeader: "Cabinet Topographique",
-      orgName: "Cabinet Alami IGT",
-      subtitle: "Ingénieur Géomètre Topographe",
-      preset: "SOCIÉTÉ DE CONTRÔLE EXT",
-      logoType: "sc",
       customImage: null
     }
   ]);
@@ -172,12 +190,72 @@ export default function FicheReception({
     project.name || "Travaux de construction du Stade de Football Al Barid à la Préfecture de Rabat"
   );
   const [missionName, setMissionName] = useState<string>("CONTRÔLE ET SUIVI TOPOGRAPHIQUES");
-  const [ficheNo, setFicheNo] = useState<string>("D3");
-  const [dateStr, setDateStr] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [planReference, setPlanReference] = useState<string>("2-OTS-SABA-EXE-STR-DWG-00-PLAN COFFRAGE");
+  const [ficheNo, setFicheNo] = useState<string>("3");
+  const [dateStr, setDateStr] = useState<string>("2024-12-17");
+  const [planReference, setPlanReference] = useState<string>("2-OTS-SABA-EXE-STR-DWG-00-PLAN COFFRAGE LES BLOCS");
   const [controlType, setControlType] = useState<string>("FOND DE FOUILLE DES SEMELLES SF2");
-  const [localisation, setLocalisation] = useState<string>("Rabat, Maroc");
+  const [localisation, setLocalisation] = useState<string>("Rabat");
   const [toleranceCm, setToleranceCm] = useState<number>(3); // Standard 3 cm threshold
+  const [revision, setRevision] = useState<string>("01");
+  const [rowsPerPage, setRowsPerPage] = useState<number>(15);
+
+  // Load configuration from localStorage on project change
+  useEffect(() => {
+    if (project?.id) {
+      const saved = localStorage.getItem(`reception_config_${project.id}`);
+      if (saved) {
+        try {
+          const config = JSON.parse(saved);
+          if (config.logoColumns) setLogoColumns(config.logoColumns);
+          if (config.projectName) setProjectName(config.projectName);
+          if (config.missionName) setMissionName(config.missionName);
+          if (config.ficheNo) setFicheNo(config.ficheNo);
+          if (config.dateStr) setDateStr(config.dateStr);
+          if (config.planReference) setPlanReference(config.planReference);
+          if (config.controlType) setControlType(config.controlType);
+          if (config.localisation) setLocalisation(config.localisation);
+          if (config.toleranceCm !== undefined) setToleranceCm(config.toleranceCm);
+          if (config.revision) setRevision(config.revision);
+          if (config.rowsPerPage !== undefined) setRowsPerPage(config.rowsPerPage);
+        } catch (e) {
+          console.error("Error parsing reception config", e);
+        }
+      }
+    }
+  }, [project?.id]);
+
+  // Save configuration to localStorage on any state changes
+  useEffect(() => {
+    if (project?.id) {
+      const config = {
+        logoColumns,
+        projectName,
+        missionName,
+        ficheNo,
+        dateStr,
+        planReference,
+        controlType,
+        localisation,
+        toleranceCm,
+        revision,
+        rowsPerPage
+      };
+      localStorage.setItem(`reception_config_${project.id}`, JSON.stringify(config));
+    }
+  }, [
+    project?.id,
+    logoColumns,
+    projectName,
+    missionName,
+    ficheNo,
+    dateStr,
+    planReference,
+    controlType,
+    localisation,
+    toleranceCm,
+    revision,
+    rowsPerPage
+  ]);
 
   // 3. Inspection Points list (initially loaded with some realistic values)
   const [points, setPoints] = useState<FichePoint[]>([
@@ -320,11 +398,11 @@ export default function FicheReception({
     
     // Automatically match preset and change logoType for easier user experience
     if (field === "preset") {
-      if (value === "Royaume du Maroc") updated[index].logoType = "maroc";
-      else if (value === "M.O DÉLÉGUÉ NATIONAL") updated[index].logoType = "mo";
-      else if (value === "BUREAU D'ÉTUDES BET") updated[index].logoType = "bet";
-      else if (value === "ENTREPRISE TRAVAUX BTP") updated[index].logoType = "btp";
-      else if (value === "SOCIÉTÉ DE CONTRÔLE EXT") updated[index].logoType = "sc";
+      if (value === "BAHI NAJIB") updated[index].logoType = "bahi_najib";
+      else if (value === "TGCC") updated[index].logoType = "tgcc";
+      else if (value === "BETTAN AHMED NANA") updated[index].logoType = "bettan";
+      else if (value === "ANEP") updated[index].logoType = "anep";
+      else if (value === "Royaume du Maroc") updated[index].logoType = "maroc";
     }
     setLogoColumns(updated);
   };
@@ -885,6 +963,38 @@ export default function FicheReception({
     }, 1000);
   };
 
+  // Formatting helper for deviations (m)
+  const formatDeviation = (val: number | null) => {
+    if (val === null) return "";
+    const absVal = Math.abs(val);
+    const sign = val >= 0 ? "+" : "-";
+    const str = absVal.toFixed(3);
+    if (str.endsWith("0")) {
+      return (val < 0 ? "-" : "") + absVal.toFixed(2);
+    }
+    return (val < 0 ? "-" : "") + str;
+  };
+
+  // Process rowspans for grouped columns (label)
+  const getChunkWithRowSpans = (chunkPoints: FichePoint[]) => {
+    const processed: (FichePoint & { rowSpan?: number })[] = [];
+    for (let i = 0; i < chunkPoints.length; i++) {
+      const current = { ...chunkPoints[i], rowSpan: 1 };
+      if (i > 0 && chunkPoints[i].label === chunkPoints[i - 1].label) {
+        let mainIdx = processed.length - 1;
+        while (mainIdx >= 0 && processed[mainIdx].rowSpan === 0) {
+          mainIdx--;
+        }
+        if (mainIdx >= 0 && processed[mainIdx].label === current.label) {
+          processed[mainIdx].rowSpan = (processed[mainIdx].rowSpan || 1) + 1;
+          current.rowSpan = 0;
+        }
+      }
+      processed.push(current);
+    }
+    return processed;
+  };
+
   // Mock excel download (.xls file format HTML with proper layout)
   const handleDownloadExcel = () => {
     let excelContent = `
@@ -892,73 +1002,179 @@ export default function FicheReception({
       <head>
         <meta charset="utf-8">
         <style>
-          table { border-collapse: collapse; font-family: Arial, sans-serif; }
-          td, th { border: 1px solid #cbd5e1; padding: 6px; text-align: center; }
-          .header-title { font-size: 14pt; font-weight: bold; background-color: #f1f5f9; }
+          table { border-collapse: collapse; font-family: 'Segoe UI', Arial, sans-serif; }
+          td, th { border: 1px solid #000000; padding: 6px; text-align: center; vertical-align: middle; font-size: 9pt; }
+          .header-cell { background-color: #f1f5f9; font-weight: bold; font-size: 8pt; text-transform: uppercase; }
+          .project-row { background-color: #f8fafc; font-weight: bold; font-size: 10pt; text-align: left; }
+          .title-bold { font-weight: bold; }
           .conforme { background-color: #dcfce7; color: #15803d; font-weight: bold; }
           .non-conforme { background-color: #fee2e2; color: #b91c1c; font-weight: bold; }
+          .meta-label { background-color: #f1f5f9; font-weight: bold; font-size: 8pt; text-align: left; }
+          .meta-value { text-align: left; font-weight: bold; }
         </style>
       </head>
       <body>
-        <h3>${projectName}</h3>
-        <h4>${missionName} - FICHE DE RECEPTION</h4>
+        <!-- Header with 5 Columns -->
         <table>
-          <thead>
-            <tr style="background-color: #1e293b; color: white;">
-              <th>AXE / SEMELLE</th>
-              <th>N°STATION</th>
-              <th>X THEORIE (M)</th>
-              <th>Y THEORIE (M)</th>
-              <th>Z THEORIE (M)</th>
-              <th>X LEVE (M)</th>
-              <th>Y LEVE (M)</th>
-              <th>Z LEVE (M)</th>
-              <th>DX (CM)</th>
-              <th>DY (CM)</th>
-              <th>DZ (CM)</th>
-              <th>E. PLAN (CM)</th>
-              <th>C/NC</th>
-            </tr>
-          </thead>
-          <tbody>
+          <tr>
+            <th colspan="2" class="header-cell" style="height: 40px;">${logoColumns[0].sectionHeader}</th>
+            <th colspan="3" class="header-cell">${logoColumns[1].sectionHeader}</th>
+            <th colspan="3" class="header-cell">${logoColumns[2].sectionHeader}</th>
+            <th colspan="3" class="header-cell">${logoColumns[3].sectionHeader}</th>
+            <th colspan="2" class="header-cell">${logoColumns[4].sectionHeader}</th>
+          </tr>
+          <tr>
+            <td colspan="2" style="font-weight: bold; font-size: 10pt; height: 30px;">${logoColumns[0].orgName}<br/><span style="font-size: 7pt; color: #64748b;">${logoColumns[0].subtitle}</span></td>
+            <td colspan="3" style="font-weight: bold; font-size: 10pt;">${logoColumns[1].orgName}<br/><span style="font-size: 7pt; color: #64748b;">${logoColumns[1].subtitle}</span></td>
+            <td colspan="3" style="font-weight: bold; font-size: 10pt;">${logoColumns[2].orgName}<br/><span style="font-size: 7pt; color: #64748b;">${logoColumns[2].subtitle}</span></td>
+            <td colspan="3" style="font-weight: bold; font-size: 10pt;">${logoColumns[3].orgName}<br/><span style="font-size: 7pt; color: #64748b;">${logoColumns[3].subtitle}</span></td>
+            <td colspan="2" style="font-weight: bold; font-size: 10pt;">${logoColumns[4].orgName}<br/><span style="font-size: 7pt; color: #64748b;">${logoColumns[4].subtitle}</span></td>
+          </tr>
+
+          <!-- Spacer -->
+          <tr style="height: 10px;"><td colspan="13" style="border: none;"></td></tr>
+
+          <!-- Project & Mission -->
+          <tr>
+            <td colspan="2" class="meta-label">PROJET :</td>
+            <td colspan="11" class="meta-value" style="font-size: 11pt;">${projectName.toUpperCase()}</td>
+          </tr>
+          <tr>
+            <td colspan="2" class="meta-label">MISSION :</td>
+            <td colspan="11" class="meta-value">${missionName.toUpperCase()}</td>
+          </tr>
+
+          <!-- Spacer -->
+          <tr style="height: 10px;"><td colspan="13" style="border: none;"></td></tr>
+
+          <!-- Metadata block -->
+          <tr>
+            <td colspan="2" class="meta-label">Fiche N° :</td>
+            <td colspan="2" class="meta-value">${ficheNo}</td>
+            <td colspan="2" class="meta-label">Référence Plan :</td>
+            <td colspan="4" class="meta-value">${planReference}</td>
+            <td colspan="2" class="meta-label">Tolérance :</td>
+            <td colspan="1" class="meta-value">±${toleranceCm} cm</td>
+          </tr>
+          <tr>
+            <td colspan="2" class="meta-label">Date :</td>
+            <td colspan="2" class="meta-value">${dateStr}</td>
+            <td colspan="2" class="meta-label">Révision :</td>
+            <td colspan="4" class="meta-value">${revision}</td>
+            <td colspan="3" class="meta-value" style="background-color: #f8fafc; font-size: 7pt;">C: conforme, NC : non conforme</td>
+          </tr>
+
+          <!-- Control details -->
+          <tr>
+            <td colspan="4" class="meta-label" style="text-align: center;">TYPE DE CONTRÔLE</td>
+            <td colspan="5" class="meta-label" style="text-align: center;">LOCALISATION</td>
+            <td colspan="4" class="meta-label" style="text-align: center;">SYSTÈME DE PROJECTION</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="meta-value" style="text-align: center;">${controlType}</td>
+            <td colspan="5" class="meta-value" style="text-align: center;">${localisation}</td>
+            <td colspan="4" class="meta-value" style="text-align: center; color: #047857;">
+              ${project.coordinateSystem?.id === "wgs84" ? "WGS84_GPS" : `MAROC_${project.coordinateSystem?.code || "ZONE_1"}`}
+            </td>
+          </tr>
+
+          <!-- Spacer -->
+          <tr style="height: 15px;"><td colspan="13" style="border: none;"></td></tr>
+
+          <!-- Main Table Headers -->
+          <tr style="background-color: #f1f5f9; font-weight: bold; height: 25px;">
+            <th style="border: 1px solid #000000; width: 150px;">Axe / Semelle</th>
+            <th style="border: 1px solid #000000; width: 80px;">N°Station*</th>
+            <th style="border: 1px solid #000000;">X Théorie (m)</th>
+            <th style="border: 1px solid #000000;">Y Théorie (m)</th>
+            <th style="border: 1px solid #000000;">Z Théorie (m)</th>
+            <th style="border: 1px solid #000000; background-color: #fafafa;">X Levé (m)</th>
+            <th style="border: 1px solid #000000; background-color: #fafafa;">Y Levé (m)</th>
+            <th style="border: 1px solid #000000; background-color: #fafafa;">Z Levé (m)</th>
+            <th style="border: 1px solid #000000; color: #b91c1c;">DX (m)</th>
+            <th style="border: 1px solid #000000; color: #b91c1c;">DY (m)</th>
+            <th style="border: 1px solid #000000; color: #b91c1c;">DZ (m)</th>
+            <th style="border: 1px solid #000000; color: #4338ca;">E. Plan (m)</th>
+            <th style="border: 1px solid #000000;">C/NC *</th>
+          </tr>
     `;
 
-    points.forEach(p => {
-      const dxVal = p.xLeve !== null ? (p.xLeve - p.xTheo) * 100 : 0;
-      const dyVal = p.yLeve !== null ? (p.yLeve - p.yTheo) * 100 : 0;
-      const dzVal = p.zLeve !== null ? (p.zLeve - p.zTheo) * 100 : 0;
-      const ePlan = Math.sqrt(dxVal * dxVal + dyVal * dyVal);
+    // Process rowspans for Excel export too!
+    const excelPoints = getChunkWithRowSpans(points);
 
-      const dxStr = p.xLeve !== null ? (dxVal > 0 ? "+" : "") + dxVal.toFixed(1) : "-";
-      const dyStr = p.yLeve !== null ? (dyVal > 0 ? "+" : "") + dyVal.toFixed(1) : "-";
-      const dzStr = p.zLeve !== null ? (dzVal > 0 ? "+" : "") + dzVal.toFixed(1) : "-";
-      const ePlanStr = p.xLeve !== null ? ePlan.toFixed(1) : "-";
+    excelPoints.forEach(p => {
+      const dxValM = p.xLeve !== null ? (p.xLeve - p.xTheo) : null;
+      const dyValM = p.yLeve !== null ? (p.yLeve - p.yTheo) : null;
+      const dzValM = p.zLeve !== null ? (p.zLeve - p.zTheo) : null;
+      
+      const dxValCm = p.xLeve !== null ? dxValM! * 100 : 0;
+      const dyValCm = p.yLeve !== null ? dyValM! * 100 : 0;
+      const dzValCm = p.zLeve !== null ? dzValM! * 100 : 0;
+      const ePlanCm = Math.sqrt(dxValCm * dxValCm + dyValCm * dyValCm);
 
-      const isConforme = p.xLeve !== null && ePlan <= toleranceCm && Math.abs(dzVal) <= toleranceCm;
+      const dxStr = formatDeviation(dxValM);
+      const dyStr = formatDeviation(dyValM);
+      const dzStr = formatDeviation(dzValM);
+      const ePlanStr = p.xLeve !== null ? (ePlanCm / 100).toFixed(3) : "";
+
+      const isConforme = p.xLeve !== null && ePlanCm <= toleranceCm && Math.abs(dzValCm) <= toleranceCm;
       const statusClass = p.xLeve !== null ? (isConforme ? "conforme" : "non-conforme") : "";
       const statusText = p.xLeve !== null ? (isConforme ? "C" : "NC") : "-";
 
       excelContent += `
-        <tr>
-          <td>${p.label}</td>
-          <td>${p.name}</td>
-          <td>${p.xTheo.toFixed(3)}</td>
-          <td>${p.yTheo.toFixed(3)}</td>
-          <td>${p.zTheo.toFixed(3)}</td>
-          <td>${p.xLeve !== null ? p.xLeve.toFixed(3) : "-"}</td>
-          <td>${p.yLeve !== null ? p.yLeve.toFixed(3) : "-"}</td>
-          <td>${p.zLeve !== null ? p.zLeve.toFixed(3) : "-"}</td>
-          <td>${dxStr}</td>
-          <td>${dyStr}</td>
-          <td>${dzStr}</td>
-          <td>${ePlanStr}</td>
-          <td class="${statusClass}">${statusText}</td>
+        <tr style="height: 20px;">
+          ${p.rowSpan !== 0 ? `<td rowspan="${p.rowSpan}" style="font-weight: bold; border: 1px solid #000000;">${p.label}</td>` : ""}
+          <td style="font-weight: bold; border: 1px solid #000000;">${p.name}</td>
+          <td style="border: 1px solid #000000; mso-number-format:'0.000';">${p.xTheo.toFixed(3)}</td>
+          <td style="border: 1px solid #000000; mso-number-format:'0.000';">${p.yTheo.toFixed(3)}</td>
+          <td style="border: 1px solid #000000; mso-number-format:'0.000';">${p.zTheo.toFixed(3)}</td>
+          <td style="border: 1px solid #000000; mso-number-format:'0.000'; background-color: #fafafa;">${p.xLeve !== null ? p.xLeve.toFixed(3) : "-"}</td>
+          <td style="border: 1px solid #000000; mso-number-format:'0.000'; background-color: #fafafa;">${p.yLeve !== null ? p.yLeve.toFixed(3) : "-"}</td>
+          <td style="border: 1px solid #000000; mso-number-format:'0.000'; background-color: #fafafa;">${p.zLeve !== null ? p.zLeve.toFixed(3) : "-"}</td>
+          <td style="border: 1px solid #000000; mso-number-format:'0.000'; font-weight: bold; color: ${p.xLeve !== null && Math.abs(dxValCm) > toleranceCm ? "#b91c1c" : "#334155"}">${dxStr}</td>
+          <td style="border: 1px solid #000000; mso-number-format:'0.000'; font-weight: bold; color: ${p.xLeve !== null && Math.abs(dyValCm) > toleranceCm ? "#b91c1c" : "#334155"}">${dyStr}</td>
+          <td style="border: 1px solid #000000; mso-number-format:'0.000'; font-weight: bold; color: ${p.xLeve !== null && Math.abs(dzValCm) > toleranceCm ? "#b91c1c" : "#334155"}">${dzStr}</td>
+          <td style="border: 1px solid #000000; mso-number-format:'0.000'; font-weight: bold; color: #4338ca;">${ePlanStr}</td>
+          <td class="${statusClass}" style="border: 1px solid #000000;">${statusText}</td>
         </tr>
       `;
     });
 
     excelContent += `
-          </tbody>
+          <!-- Spacer -->
+          <tr style="height: 15px;"><td colspan="13" style="border: none;"></td></tr>
+
+          <!-- Signatures Section -->
+          <tr style="height: 25px;">
+            <th colspan="4" class="header-cell">CONTRÔLE INTERNE : ENTREPRISE</th>
+            <th colspan="5" class="header-cell">CONTRÔLE EXTERNE : BUREAU D'ÉTUDES</th>
+            <th colspan="4" class="header-cell">CONTRÔLE EXTÉRIEUR : MO / CABINET TOPO</th>
+          </tr>
+          <tr style="height: 60px;">
+            <td colspan="4" style="vertical-align: top; text-align: left; padding: 6px; font-size: 8pt; color: #475569;">
+              Contrôle Interne : ${logoColumns[1].orgName}<br/><br/>
+              Date et Signature:
+            </td>
+            <td colspan="5" style="vertical-align: top; text-align: left; padding: 6px; font-size: 8pt; color: #475569;">
+              Contrôle externe entreprise : ${logoColumns[2].orgName}<br/><br/>
+              Date et Signature:
+            </td>
+            <td colspan="4" style="vertical-align: top; text-align: left; padding: 6px; font-size: 8pt; color: #475569;">
+              Contrôle extérieur M.O : ${logoColumns[0].orgName}<br/><br/>
+              Date et Signature:
+            </td>
+          </tr>
+
+          <!-- Bottom Dates & Visas -->
+          <tr style="height: 10px;"><td colspan="13" style="border: none;"></td></tr>
+          <tr>
+            <td colspan="2" class="meta-label" style="text-align: center;">Date</td>
+            <td colspan="11" style="border: 1px solid #000000; height: 30px;"></td>
+          </tr>
+          <tr>
+            <td colspan="2" class="meta-label" style="text-align: center;">Visa</td>
+            <td colspan="11" style="border: 1px solid #000000; height: 40px;"></td>
+          </tr>
         </table>
       </body>
       </html>
@@ -972,7 +1188,7 @@ export default function FicheReception({
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    setImporterOutput("Fichier Excel (.xls) généré et téléchargé.");
+    setImporterOutput("Fichier Excel (.xls) officiel généré et téléchargé.");
   };
 
   // Print Document (custom full-page layout)
@@ -1123,11 +1339,11 @@ export default function FicheReception({
                       onChange={e => handleLogoChange(index, "preset", e.target.value)}
                       className="w-full bg-[#0B1220] border border-slate-800 rounded px-2 py-1 text-white font-mono text-[10px] cursor-pointer"
                     >
+                      <option value="BAHI NAJIB">SOCIETE BAHI NAJIB</option>
+                      <option value="TGCC">Entreprise TGCC</option>
+                      <option value="BETTAN AHMED NANA">B.E.T. AHMED NANA</option>
+                      <option value="ANEP">ANEP (M.O Délégué)</option>
                       <option value="Royaume du Maroc">Royaume du Maroc</option>
-                      <option value="M.O DÉLÉGUÉ NATIONAL">M.O Délégué National</option>
-                      <option value="BUREAU D'ÉTUDES BET">Bureau d'Études B.E.T</option>
-                      <option value="ENTREPRISE TRAVAUX BTP">Entreprise Travaux BTP</option>
-                      <option value="SOCIÉTÉ DE CONTRÔLE EXT">Société de Contrôle Extérieur</option>
                     </select>
                   </div>
 
@@ -1217,29 +1433,50 @@ export default function FicheReception({
 
             <div>
               <label className="block text-[10px] text-slate-500 font-mono mb-1">Fiche N°, Date & Révision :</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <input
                   type="text"
                   value={ficheNo}
                   onChange={e => setFicheNo(e.target.value)}
                   placeholder="Fiche N°"
+                  title="Numéro de Fiche"
                   className="w-full bg-[#0B1220] border border-slate-800 rounded p-2 text-white text-xs outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
                 />
                 <input
                   type="date"
                   value={dateStr}
                   onChange={e => setDateStr(e.target.value)}
+                  title="Date"
                   className="w-full bg-[#0B1220] border border-slate-800 rounded p-2 text-white text-xs outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
                 />
-              </div>
-              <div className="mt-1">
-                <label className="block text-[9px] text-slate-500 font-mono mb-0.5">Localisation :</label>
                 <input
                   type="text"
-                  value={localisation}
-                  onChange={e => setLocalisation(e.target.value)}
-                  className="w-full bg-[#0B1220] border border-slate-800 rounded p-1.5 text-white font-mono text-[10px]"
+                  value={revision}
+                  onChange={e => setRevision(e.target.value)}
+                  placeholder="Rév."
+                  title="Indice de Révision"
+                  className="w-full bg-[#0B1220] border border-slate-800 rounded p-2 text-white text-xs outline-none focus:ring-1 focus:ring-indigo-500 font-mono text-center"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-1.5">
+                <div>
+                  <label className="block text-[9px] text-slate-500 font-mono mb-0.5">Localisation :</label>
+                  <input
+                    type="text"
+                    value={localisation}
+                    onChange={e => setLocalisation(e.target.value)}
+                    className="w-full bg-[#0B1220] border border-slate-800 rounded p-1.5 text-white font-mono text-[10px]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] text-slate-500 font-mono mb-0.5">Lignes de points par page A4 :</label>
+                  <input
+                    type="number"
+                    value={rowsPerPage}
+                    onChange={e => setRowsPerPage(Math.max(5, Math.min(50, parseInt(e.target.value) || 15)))}
+                    className="w-full bg-[#0B1220] border border-slate-800 rounded p-1.5 text-white font-mono text-[10px] text-center"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -1564,324 +1801,358 @@ export default function FicheReception({
               <span>Chargement du fichier topographique... Lecture des octets CAO...</span>
             </div>
           )}
-
-          {importerOutput && (
-            <div className="p-3 bg-emerald-950/30 border border-emerald-900/30 text-emerald-400 rounded-lg text-xs font-mono">
-              {importerOutput}
-            </div>
-          )}
         </div>
       )}
 
       {/* 3. Real-Time preview: Official Fiche PDF Page layout container */}
       <div className="bg-[#0B1220] border border-slate-800 p-6 rounded-2xl shadow-xl overflow-x-auto">
         <div className="text-slate-400 text-xs mb-3 font-mono flex items-center justify-between">
-          <span>👁️ PREVISUALISATION DU RAPPORT DE CONFORMITE / PLAN DE RECEPTION (FORMAT A4)</span>
+          <span>👁️ PRÉVISUALISATION DU RAPPORT DE CONFORMITÉ / PLAN DE RÉCEPTION (FORMAT A4)</span>
           <span className="text-slate-500 text-[10px]">Utilisez le bouton "Imprimer la Fiche" ci-dessus pour sortir en A4</span>
         </div>
 
         {/* The Printable A4 Sheet container */}
-        <div 
-          id="printable-fiche-reception-a4" 
-          className="mx-auto bg-white text-slate-900 p-6 shadow-2xl rounded-sm w-[210mm] min-h-[297mm] font-sans border border-slate-300 select-all"
-          style={{ contentVisibility: "auto" }}
-        >
+        <div id="printable-fiche-reception-a4" className="w-full">
           {/* Printable Page Styles specifically targeting window.print() */}
           <style dangerouslySetInnerHTML={{ __html: `
             @media print {
               body * {
-                visibility: hidden;
+                visibility: hidden !important;
               }
               #printable-fiche-reception-a4, #printable-fiche-reception-a4 * {
-                visibility: visible;
+                visibility: visible !important;
               }
               #printable-fiche-reception-a4 {
-                position: absolute;
-                left: 0;
-                top: 0;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
                 width: 210mm !important;
-                height: 297mm !important;
-                padding: 10mm !important;
+                padding: 0 !important;
                 border: none !important;
                 box-shadow: none !important;
                 margin: 0 !important;
                 background: white !important;
-                color: black !important;
               }
-              nav, button, header, footer, .fixed, .no-print {
+              .print-page {
+                width: 210mm !important;
+                height: 297mm !important;
+                padding: 10mm !important;
+                box-sizing: border-box !important;
+                page-break-after: always !important;
+                position: relative !important;
+                background: white !important;
+                border: none !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+              }
+              .print-page:last-child {
+                page-break-after: avoid !important;
+              }
+              .no-print {
                 display: none !important;
               }
             }
           `}} />
 
-          {/* A4 Header Section - 5 Columns for Logos & Agencies */}
-          <div className="grid grid-cols-5 border border-slate-900 text-center text-[10px] leading-tight mb-4 select-none">
-            {logoColumns.map((col, index) => {
-              const preset = PRESET_LOGOS[col.logoType as keyof typeof PRESET_LOGOS];
+          {(() => {
+            // Helper to split points into pages
+            const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+              if (arr.length === 0) return [[]];
+              const chunks: T[][] = [];
+              for (let i = 0; i < arr.length; i += size) {
+                chunks.push(arr.slice(i, i + size));
+              }
+              return chunks;
+            };
+
+            const pageChunks = chunkArray(points, rowsPerPage);
+
+            return pageChunks.map((chunk, pageIdx) => {
+              const processedChunkPoints = getChunkWithRowSpans(chunk);
+
               return (
                 <div 
-                  key={index} 
-                  className={`p-2 flex flex-col items-center justify-between min-h-[110px] ${
-                    index < 4 ? "border-r border-slate-900" : ""
-                  }`}
+                  key={pageIdx} 
+                  className="print-page mx-auto bg-white text-slate-900 p-[10mm] shadow-2xl rounded-sm w-[210mm] h-[297mm] font-sans border border-slate-300 relative flex flex-col justify-between select-all mb-8"
                 >
-                  <span className="text-[8px] uppercase tracking-wide text-slate-500 block h-4 font-mono font-bold">
-                    {col.sectionHeader || "..."}
-                  </span>
+                  {/* Top Sheet Section */}
+                  <div>
+                    {/* A4 Header Section - 5 Columns for Logos & Agencies */}
+                    <div className="grid grid-cols-5 border border-slate-900 text-center text-[9px] leading-tight mb-3 select-none">
+                      {logoColumns.map((col, index) => {
+                        const preset = PRESET_LOGOS[col.logoType as keyof typeof PRESET_LOGOS];
+                        return (
+                          <div 
+                            key={index} 
+                            className={`p-1.5 flex flex-col items-center justify-between min-h-[95px] ${
+                              index < 4 ? "border-r border-slate-900" : ""
+                            }`}
+                          >
+                            <span className="text-[7.5px] uppercase tracking-wide text-slate-500 block h-3.5 font-mono font-bold leading-none truncate max-w-full">
+                              {col.sectionHeader || "..."}
+                            </span>
 
-                  {/* Logo block */}
-                  <div className="my-1.5 flex items-center justify-center h-12 w-full">
-                    {col.customImage ? (
-                      <img 
-                        src={col.customImage} 
-                        alt="Logo" 
-                        className="max-h-12 max-w-[85%] object-contain" 
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : preset ? (
-                      <div className={`p-1.5 rounded-lg ${preset.bg} ${preset.textColor} flex items-center justify-center shadow-sm`}>
-                        {preset.icon}
+                            {/* Logo block */}
+                            <div className="my-1 flex items-center justify-center h-10 w-full">
+                              {col.customImage ? (
+                                <img 
+                                  src={col.customImage} 
+                                  alt="Logo" 
+                                  className="max-h-10 max-w-[85%] object-contain" 
+                                  referrerPolicy="no-referrer"
+                                />
+                              ) : preset ? (
+                                <div className="transform scale-90">
+                                  {preset.icon}
+                                </div>
+                              ) : (
+                                <div className="bg-slate-200 w-8 h-8 rounded flex items-center justify-center font-bold text-slate-600 text-xs">
+                                  IGT
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-px w-full">
+                              <span className="block font-black text-[8px] uppercase text-slate-800 truncate leading-none" title={col.orgName}>
+                                {col.orgName || "Cabinet Topo"}
+                              </span>
+                              <span className="block text-[7px] text-slate-500 leading-none italic truncate">
+                                {col.subtitle || "Rôle"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Project Details Sheet Block */}
+                    <div className="border border-slate-900 p-2.5 text-[11px] leading-tight mb-2.5 font-mono space-y-0.5">
+                      <div>
+                        <span className="font-bold text-[10px] text-slate-600">PROJET :</span>{" "}
+                        <span className="font-black text-[11px] uppercase text-black">{projectName}</span>
                       </div>
-                    ) : (
-                      <div className="bg-slate-200 w-10 h-10 rounded flex items-center justify-center font-bold text-slate-600">
-                        IGT
+                      <div className="pt-0.5 border-t border-slate-100">
+                        <span className="font-bold text-slate-600">MISSION :</span>{" "}
+                        <span className="font-bold text-slate-900 uppercase">{missionName}</span>
                       </div>
-                    )}
+                    </div>
+
+                    {/* Meta detail grid row */}
+                    <div className="grid grid-cols-12 border border-slate-900 text-[10px] font-mono mb-2.5 leading-tight">
+                      <div className="col-span-4 p-1.5 border-r border-slate-900 space-y-0.5">
+                        <div>
+                          <span className="text-slate-500 text-[9px]">Fiche N° :</span>{" "}
+                          <span className="font-black text-slate-900">{ficheNo}</span>
+                        </div>
+                        <div className="pt-0.5 border-t border-slate-150">
+                          <span className="text-slate-500 text-[9px]">Date :</span>{" "}
+                          <span className="font-bold text-slate-800">{dateStr}</span>
+                        </div>
+                      </div>
+
+                      <div className="col-span-5 p-1.5 border-r border-slate-900 space-y-0.5 flex flex-col justify-center">
+                        <span className="text-slate-500 text-[8px] uppercase font-bold">RÉFÉRENCE DE PLAN :</span>
+                        <span className="font-bold text-slate-900 text-[10px] truncate" title={planReference}>
+                          {planReference}
+                        </span>
+                      </div>
+
+                      <div className="col-span-3 p-1.5 bg-slate-50/60 flex flex-col items-center justify-center text-center">
+                        <span className="text-[9px] text-slate-500 leading-none mb-0.5">Indice Rév. : <span className="font-bold text-slate-900">{revision}</span></span>
+                        <span className="text-[8px] font-bold text-slate-700 uppercase">Tolérance : ±{toleranceCm} cm</span>
+                      </div>
+                    </div>
+
+                    {/* Control details row */}
+                    <div className="grid grid-cols-3 border border-slate-900 text-[9px] font-mono mb-3 text-center leading-tight">
+                      <div className="p-1.5 border-r border-slate-900">
+                        <span className="text-slate-500 block text-[7px] uppercase">TYPE DE CONTRÔLE</span>
+                        <span className="font-bold text-slate-800 truncate block">{controlType}</span>
+                      </div>
+                      <div className="p-1.5 border-r border-slate-900">
+                        <span className="text-slate-500 block text-[7px] uppercase">LOCALISATION</span>
+                        <span className="font-bold text-slate-800 truncate block">{localisation}</span>
+                      </div>
+                      <div className="p-1.5">
+                        <span className="text-slate-500 block text-[7px] uppercase">SYSTÈME DE PROJECTION</span>
+                        <span className="font-bold text-emerald-800 uppercase truncate block">
+                          {project.coordinateSystem?.id === "wgs84" ? "WGS84_GPS" : `MAROC_${project.coordinateSystem?.code || "ZONE_1"}`}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Main Inspection Coordinates Table */}
+                    <div className="mb-2">
+                      <table className="w-full border-collapse border border-slate-900 text-[9.5px] font-mono leading-none">
+                        <thead>
+                          <tr className="bg-slate-100 text-slate-850 uppercase text-center border-b border-slate-900 font-bold select-none h-6">
+                            <th className="border-r border-slate-900 p-1 text-left w-[22%]">Axe / Semelle</th>
+                            <th className="border-r border-slate-900 p-1 w-[10%]">N°Station*</th>
+                            <th className="border-r border-slate-900 p-1">X THEORIE</th>
+                            <th className="border-r border-slate-900 p-1">Y THEORIE</th>
+                            <th className="border-r border-slate-900 p-1">Z THEORIE</th>
+                            <th className="border-r border-slate-900 p-1 bg-slate-50">Z LEVE</th>
+                            <th className="border-r border-slate-900 p-1 text-rose-800 font-bold">DX</th>
+                            <th className="border-r border-slate-900 p-1 text-rose-800 font-bold">DY</th>
+                            <th className="border-r border-slate-900 p-1 text-rose-800 font-bold">DZ</th>
+                            <th className="p-1 w-[10%]">C/NC *</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {chunk.length === 0 ? (
+                            <tr>
+                              <td colSpan={10} className="p-4 text-center text-slate-400 italic">
+                                Aucune coordonnée dans cette page.
+                              </td>
+                            </tr>
+                          ) : (
+                            processedChunkPoints.map((p, idx) => {
+                              const dxVal = p.xLeve !== null ? (p.xLeve - p.xTheo) : null;
+                              const dyVal = p.yLeve !== null ? (p.yLeve - p.yTheo) : null;
+                              const dzVal = p.zLeve !== null ? (p.zLeve - p.zTheo) : null;
+                              
+                              const dxValCm = p.xLeve !== null ? dxVal! * 100 : 0;
+                              const dyValCm = p.yLeve !== null ? dyVal! * 100 : 0;
+                              const dzValCm = p.zLeve !== null ? dzVal! * 100 : 0;
+                              const ePlan = p.xLeve !== null ? Math.sqrt(dxValCm * dxValCm + dyValCm * dyValCm) : 0;
+
+                              const dxStr = formatDeviation(dxVal);
+                              const dyStr = formatDeviation(dyVal);
+                              const dzStr = formatDeviation(dzVal);
+
+                              const isDxOk = p.xLeve === null || Math.abs(dxValCm) <= toleranceCm;
+                              const isDyOk = p.xLeve === null || Math.abs(dyValCm) <= toleranceCm;
+                              const isDzOk = p.zLeve === null || Math.abs(dzValCm) <= toleranceCm;
+                              const isEPlanOk = p.xLeve === null || ePlan <= toleranceCm;
+
+                              const isConforme = p.zLeve !== null && isEPlanOk && isDzOk;
+
+                              return (
+                                <tr key={p.id} className="border-b border-slate-900 text-center h-[18px]">
+                                  {p.rowSpan !== 0 && (
+                                    <td 
+                                      rowSpan={p.rowSpan} 
+                                      className="border-r border-slate-900 p-1 text-left font-sans text-[8.5px] font-black text-slate-800 align-middle bg-white max-w-[120px] truncate"
+                                    >
+                                      {p.label}
+                                    </td>
+                                  )}
+                                  <td className="border-r border-slate-900 p-1 font-bold text-slate-900">
+                                    {p.name}
+                                  </td>
+                                  <td className="border-r border-slate-900 p-1 font-mono text-slate-600 text-[9px]">
+                                    {p.xTheo.toFixed(3)}
+                                  </td>
+                                  <td className="border-r border-slate-900 p-1 font-mono text-slate-600 text-[9px]">
+                                    {p.yTheo.toFixed(3)}
+                                  </td>
+                                  <td className="border-r border-slate-900 p-1 font-mono text-slate-600 text-[9px]">
+                                    {p.zTheo.toFixed(3)}
+                                  </td>
+                                  <td className="border-r border-slate-900 p-1 font-mono bg-slate-50 text-slate-900 text-[9px] font-bold">
+                                    {p.zLeve !== null ? p.zLeve.toFixed(3) : "-"}
+                                  </td>
+                                  <td className={`border-r border-slate-900 p-1 font-bold text-[9px] ${!isDxOk && p.xLeve !== null ? "text-red-600 bg-red-50 font-black" : "text-slate-700"}`}>
+                                    {dxStr || "-"}
+                                  </td>
+                                  <td className={`border-r border-slate-900 p-1 font-bold text-[9px] ${!isDyOk && p.xLeve !== null ? "text-red-600 bg-red-50 font-black" : "text-slate-700"}`}>
+                                    {dyStr || "-"}
+                                  </td>
+                                  <td className={`border-r border-slate-900 p-1 font-bold text-[9px] ${!isDzOk && p.zLeve !== null ? "text-red-600 bg-red-50 font-black" : "text-slate-700"}`}>
+                                    {dzStr || "-"}
+                                  </td>
+                                  <td className="p-0.5 border-slate-900 align-middle">
+                                    <div className="flex items-center justify-center space-x-1.5">
+                                      {p.zLeve === null ? (
+                                        <span className="text-slate-400 font-bold">-</span>
+                                      ) : isConforme ? (
+                                        <span className="text-emerald-700 font-black text-[9px] bg-emerald-50 px-1 border border-emerald-300 rounded leading-none">C</span>
+                                      ) : (
+                                        <span className="text-red-700 font-black text-[9px] bg-red-50 px-1 border border-red-300 rounded leading-none">NC</span>
+                                      )}
+
+                                      {/* Client-editor only delete button (hidden during print) */}
+                                      <button
+                                        onClick={() => handleDeletePoint(p.id)}
+                                        className="p-0.5 text-slate-300 hover:text-red-500 rounded transition-colors no-print cursor-pointer"
+                                        title="Supprimer ce point"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
-                  <div className="space-y-0.5">
-                    <span className="block font-black text-[9px] uppercase text-slate-800 truncate max-w-[140px]" title={col.orgName}>
-                      {col.orgName || "Cabinet Topo"}
-                    </span>
-                    <span className="block text-[8px] text-slate-500 leading-none italic">
-                      {col.subtitle || "Rôle"}
-                    </span>
+                  {/* Bottom Sheet Section */}
+                  <div>
+                    {/* Tripartite Signatures Validation Block */}
+                    <div className="grid grid-cols-3 border border-slate-900 text-center font-sans mt-2 select-none text-[8.5px] leading-tight">
+                      {/* Constructeur */}
+                      <div className="border-r border-slate-900 p-2 min-h-[95px] flex flex-col justify-between">
+                        <span className="font-black uppercase text-slate-800">
+                          CONTRÔLE INTERNE : ENTREPRISE
+                        </span>
+                        <div className="text-[9px] text-slate-600 font-bold italic py-1 truncate">
+                          {logoColumns[1].orgName}
+                        </div>
+                        <span className="text-[7.5px] text-slate-400 font-mono">Date, Signature & Cachet</span>
+                      </div>
+
+                      {/* Bureau d'etude */}
+                      <div className="border-r border-slate-900 p-2 min-h-[95px] flex flex-col justify-between">
+                        <span className="font-black uppercase text-slate-800">
+                          CONTRÔLE EXTERNE : BUREAU D'ÉTUDES [B.E.T]
+                        </span>
+                        <div className="text-[9px] text-slate-600 font-bold italic py-1 truncate">
+                          {logoColumns[2].orgName}
+                        </div>
+                        <span className="text-[7.5px] text-slate-400 font-mono">Date, Signature & Cachet</span>
+                      </div>
+
+                      {/* IGT Cabinet */}
+                      <div className="p-2 min-h-[95px] flex flex-col justify-between">
+                        <span className="font-black uppercase text-slate-800">
+                          CONTRÔLE EXTÉRIEUR : CABINET TOPO / M.O
+                        </span>
+                        <div className="text-[9px] text-slate-600 font-bold italic py-1 truncate">
+                          {logoColumns[0].orgName}
+                        </div>
+                        <span className="text-[7.5px] text-slate-400 font-mono">Date, Signature & Cachet</span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Date & Visa block */}
+                    <div className="mt-2 border-collapse border border-slate-900 text-[9px] font-mono select-none">
+                      <div className="flex border-b border-slate-900 h-6">
+                        <div className="w-[12%] font-bold text-center border-r border-slate-900 bg-slate-50 flex items-center justify-center">Date</div>
+                        <div className="w-[88%] p-1"></div>
+                      </div>
+                      <div className="flex h-8">
+                        <div className="w-[12%] font-bold text-center border-r border-slate-900 bg-slate-50 flex items-center justify-center">Visa</div>
+                        <div className="w-[88%] p-1"></div>
+                      </div>
+                    </div>
+
+                    {/* Footer Metadata */}
+                    <div className="flex justify-between items-center text-[7.5px] font-mono font-bold text-slate-500 mt-2 border-t border-slate-300 pt-1 select-none">
+                      <span>* RELEVÉS EFFECTUÉS PAR LEVER GPS-RTK ET STATION TOTALE DE PRÉCISION</span>
+                      <span className="uppercase text-slate-700">PAGE {pageIdx + 1} SUR {pageChunks.length}</span>
+                    </div>
                   </div>
                 </div>
               );
-            })}
-          </div>
-
-          {/* Project Details Sheet Block */}
-          <div className="border border-slate-900 p-3 text-xs leading-normal mb-3 font-mono space-y-1">
-            <div>
-              <span className="font-bold text-[11px] text-slate-700">PROJET :</span>{" "}
-              <span className="font-black text-[12px] uppercase text-black">{projectName}</span>
-            </div>
-            <div className="pt-1 border-t border-slate-200">
-              <span className="font-bold text-slate-700">MISSION :</span>{" "}
-              <span className="font-bold text-slate-900 uppercase">{missionName}</span>
-            </div>
-          </div>
-
-          {/* Meta detail grid row */}
-          <div className="grid grid-cols-12 border border-slate-900 text-xs font-mono mb-3 leading-normal">
-            <div className="col-span-4 p-2 border-r border-slate-900 space-y-1">
-              <div>
-                <span className="text-slate-500 text-[10px]">Fiche N° :</span>{" "}
-                <span className="font-black text-slate-900">{ficheNo}</span>
-              </div>
-              <div className="pt-1 border-t border-slate-200">
-                <span className="text-slate-500 text-[10px]">Date :</span>{" "}
-                <span className="font-bold text-slate-800">{dateStr}</span>
-              </div>
-            </div>
-
-            <div className="col-span-5 p-2 border-r border-slate-900 space-y-1 flex flex-col justify-center">
-              <span className="text-slate-500 text-[9px] uppercase font-bold">RÉFÉRENCE DE PLAN :</span>
-              <span className="font-bold text-slate-900 text-[11px] truncate" title={planReference}>
-                {planReference}
-              </span>
-            </div>
-
-            <div className="col-span-3 p-2 bg-slate-50/60 flex flex-col items-center justify-center text-center">
-              <span className="text-[10px] text-slate-500">Statut de conformité</span>
-              <span className="text-[9px] font-bold text-slate-700 uppercase">Tolérance XYZ : ±{toleranceCm} cm</span>
-            </div>
-          </div>
-
-          {/* Control details row */}
-          <div className="grid grid-cols-3 border border-slate-900 text-[10px] font-mono mb-4 text-center leading-normal">
-            <div className="p-2 border-r border-slate-900">
-              <span className="text-slate-500 block text-[8px] uppercase">TYPE DE CONTRÔLE</span>
-              <span className="font-bold text-slate-800">{controlType}</span>
-            </div>
-            <div className="p-2 border-r border-slate-900">
-              <span className="text-slate-500 block text-[8px] uppercase">LOCALISATION</span>
-              <span className="font-bold text-slate-800">{localisation}</span>
-            </div>
-            <div className="p-2">
-              <span className="text-slate-500 block text-[8px] uppercase">SYSTÈME DE PROJECTION</span>
-              <span className="font-bold text-emerald-700 uppercase">
-                {project.coordinateSystem?.id === "wgs84" ? "WGS84_GPS" : `MAROC_${project.coordinateSystem?.code || "ZONE_1"}`}
-              </span>
-            </div>
-          </div>
-
-          {/* Main Inspection Coordinates Table */}
-          <div className="overflow-x-auto mb-4">
-            <table className="w-full border-collapse border border-slate-900 text-[10px] font-mono leading-tight">
-              <thead>
-                <tr className="bg-slate-100 text-slate-850 uppercase text-center border-b border-slate-900 font-bold select-none">
-                  <th className="border-r border-slate-900 p-1.5 text-left w-[20%]">Axe / Semelle</th>
-                  <th className="border-r border-slate-900 p-1.5 w-[10%]">N°Station*</th>
-                  <th className="border-r border-slate-900 p-1.5">X Théorie (m)</th>
-                  <th className="border-r border-slate-900 p-1.5">Y Théorie (m)</th>
-                  <th className="border-r border-slate-900 p-1.5">Z Théorie (m)</th>
-                  <th className="border-r border-slate-900 p-1.5 bg-slate-50">X Levé (m)</th>
-                  <th className="border-r border-slate-900 p-1.5 bg-slate-50">Y Levé (m)</th>
-                  <th className="border-r border-slate-900 p-1.5 bg-slate-50">Z Levé (m)</th>
-                  <th className="border-r border-slate-900 p-1.5 text-rose-700 font-bold">DX (cm)</th>
-                  <th className="border-r border-slate-900 p-1.5 text-rose-700 font-bold">DY (cm)</th>
-                  <th className="border-r border-slate-900 p-1.5 text-rose-700 font-bold">DZ (cm)</th>
-                  <th className="border-r border-slate-900 p-1.5 text-indigo-700 font-bold">E. Plan (cm)</th>
-                  <th className="p-1.5">C/NC *</th>
-                </tr>
-              </thead>
-              <tbody>
-                {points.length === 0 ? (
-                  <tr>
-                    <td colSpan={13} className="p-4 text-center text-slate-400 italic">
-                      Aucune coordonnée dans la fiche de réception. Veuillez en saisir ou en importer ci-dessus.
-                    </td>
-                  </tr>
-                ) : (
-                  points.map((p, idx) => {
-                    // Calculations in cm
-                    const dxVal = p.xLeve !== null ? (p.xLeve - p.xTheo) * 100 : 0;
-                    const dyVal = p.yLeve !== null ? (p.yLeve - p.yTheo) * 100 : 0;
-                    const dzVal = p.zLeve !== null ? (p.zLeve - p.zTheo) * 100 : 0;
-                    const ePlan = Math.sqrt(dxVal * dxVal + dyVal * dyVal);
-
-                    // Formats
-                    const dxStr = p.xLeve !== null ? (dxVal > 0 ? "+" : "") + dxVal.toFixed(1) : "-";
-                    const dyStr = p.yLeve !== null ? (dyVal > 0 ? "+" : "") + dyVal.toFixed(1) : "-";
-                    const dzStr = p.zLeve !== null ? (dzVal > 0 ? "+" : "") + dzVal.toFixed(1) : "-";
-                    const ePlanStr = p.xLeve !== null ? ePlan.toFixed(1) : "-";
-
-                    // Check Conformity with active tolerance threshold (e.g. 3cm)
-                    const isDxOk = p.xLeve !== null && Math.abs(dxVal) <= toleranceCm;
-                    const isDyOk = p.xLeve !== null && Math.abs(dyVal) <= toleranceCm;
-                    const isDzOk = p.xLeve !== null && Math.abs(dzVal) <= toleranceCm;
-                    const isEPlanOk = p.xLeve !== null && ePlan <= toleranceCm;
-
-                    const isConforme = p.xLeve !== null && isEPlanOk && isDzOk;
-
-                    return (
-                      <tr key={p.id} className={`border-b border-slate-900 text-center ${idx % 2 === 0 ? "bg-slate-50/40" : "bg-white"}`}>
-                        <td className="border-r border-slate-900 p-1.5 text-left font-sans text-[9px] font-bold text-slate-800">
-                          {p.label}
-                        </td>
-                        <td className="border-r border-slate-900 p-1.5 font-bold text-slate-900">
-                          {p.name}
-                        </td>
-                        <td className="border-r border-slate-900 p-1.5 font-mono text-slate-600">
-                          {p.xTheo.toFixed(3)}
-                        </td>
-                        <td className="border-r border-slate-900 p-1.5 font-mono text-slate-600">
-                          {p.yTheo.toFixed(3)}
-                        </td>
-                        <td className="border-r border-slate-900 p-1.5 font-mono text-slate-600">
-                          {p.zTheo.toFixed(3)}
-                        </td>
-                        <td className="border-r border-slate-900 p-1.5 font-mono bg-slate-50 text-slate-900">
-                          {p.xLeve !== null ? p.xLeve.toFixed(3) : "-"}
-                        </td>
-                        <td className="border-r border-slate-900 p-1.5 font-mono bg-slate-50 text-slate-900">
-                          {p.yLeve !== null ? p.yLeve.toFixed(3) : "-"}
-                        </td>
-                        <td className="border-r border-slate-900 p-1.5 font-mono bg-slate-50 text-slate-900">
-                          {p.zLeve !== null ? p.zLeve.toFixed(3) : "-"}
-                        </td>
-
-                        {/* Deviations columns: RED if exceeds active contract tolerance */}
-                        <td className={`border-r border-slate-900 p-1.5 font-bold ${!isDxOk && p.xLeve !== null ? "text-red-600 font-extrabold bg-red-50" : "text-slate-700"}`}>
-                          {dxStr}
-                        </td>
-                        <td className={`border-r border-slate-900 p-1.5 font-bold ${!isDyOk && p.xLeve !== null ? "text-red-600 font-extrabold bg-red-50" : "text-slate-700"}`}>
-                          {dyStr}
-                        </td>
-                        <td className={`border-r border-slate-900 p-1.5 font-bold ${!isDzOk && p.xLeve !== null ? "text-red-600 font-extrabold bg-red-50" : "text-slate-700"}`}>
-                          {dzStr}
-                        </td>
-                        <td className={`border-r border-slate-900 p-1.5 font-bold text-indigo-700 ${!isEPlanOk && p.xLeve !== null ? "text-red-600 font-extrabold bg-red-50" : ""}`}>
-                          {ePlanStr}
-                        </td>
-
-                        {/* Conforme status */}
-                        <td className="p-1 border-slate-900 flex items-center justify-center">
-                          {p.xLeve === null ? (
-                            <span className="text-slate-400 font-bold">-</span>
-                          ) : isConforme ? (
-                            <div className="flex items-center space-x-1 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-300 text-emerald-700 font-extrabold text-[9px]">
-                              <CheckCircle className="w-3 h-3 text-emerald-600" />
-                              <span>C</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center space-x-1 px-2 py-0.5 rounded bg-red-50 border border-red-300 text-red-700 font-extrabold text-[9px]">
-                              <XCircle className="w-3 h-3 text-red-600" />
-                              <span>NC</span>
-                            </div>
-                          )}
-
-                          {/* Client-editor only delete button (hidden during print) */}
-                          <button
-                            onClick={() => handleDeletePoint(p.id)}
-                            className="ml-2 p-1 text-slate-300 hover:text-red-500 rounded transition-colors no-print cursor-pointer"
-                            title="Supprimer ce point"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Tripartite Signatures Validation Block */}
-          <div className="grid grid-cols-3 border border-slate-900 text-center font-sans mt-6 select-none">
-            {/* Constructeur */}
-            <div className="border-r border-slate-900 p-3 min-h-[120px] flex flex-col justify-between">
-              <span className="text-[9px] font-black uppercase text-slate-800 leading-tight">
-                CONTRÔLE INTERNE : ENTREPRISE DE CONSTRUCTION
-              </span>
-              <div className="text-[10px] text-slate-500 italic py-6">
-                Contrôle Interne : SOCOTRAP S.A.
-              </div>
-              <span className="text-[8px] text-slate-400 font-mono">Date, Signature et Cachet</span>
-            </div>
-
-            {/* Bureau d'etude */}
-            <div className="border-r border-slate-900 p-3 min-h-[120px] flex flex-col justify-between">
-              <span className="text-[9px] font-black uppercase text-slate-800 leading-tight">
-                CONTRÔLE EXTERNE : BUREAU D'ÉTUDES [B.E.T]
-              </span>
-              <div className="text-[10px] text-slate-500 italic py-6">
-                Contrôle externe entreprise : Bureau d'Études Techniques
-              </div>
-              <span className="text-[8px] text-slate-400 font-mono">Date, Signature et Cachet</span>
-            </div>
-
-            {/* IGT Cabinet */}
-            <div className="p-3 min-h-[120px] flex flex-col justify-between">
-              <span className="text-[9px] font-black uppercase text-slate-800 leading-tight">
-                CONTRÔLE EXTÉRIEUR : CABINET D'ARPENTAGE TOPOGRAPHIQUE [M.O]
-              </span>
-              <div className="text-[10px] text-slate-500 italic py-6">
-                Contrôle extérieur M.O : Cabinet de Topographie Agrée
-              </div>
-              <span className="text-[8px] text-slate-400 font-mono">Date, Signature et Cachet</span>
-            </div>
-          </div>
-
-          {/* Footer Metadata */}
-          <div className="flex justify-between items-center text-[8px] font-mono font-bold text-slate-500 mt-6 border-t border-slate-300 pt-2 select-none">
-            <span>* BORNES REPÉRÉES PAR LEVER POLAIRE GPS-RTK CENTIMÉTRIQUE</span>
-            <span>CERTIFIÉ CONFORME AU DOCUMENT D'ÉXÉCUTION - PAGE ACTIVE 1/1</span>
-          </div>
+            });
+          })()}
         </div>
       </div>
     </div>

@@ -697,6 +697,63 @@ app.post("/api/auth/login", (req, res) => {
   });
 });
 
+// Endpoint to synchronize Firebase registered/authenticated users with the local/SQL DB
+app.post("/api/auth/firebase-sync", (req, res) => {
+  const { email, name, uid } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "L'e-mail est requis pour l'inscription/connexion." });
+  }
+
+  const db = getDb();
+  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  const isAdmin = isAdminEmail(email);
+
+  if (!user) {
+    // Dynamically register the new user in backend DB
+    user = {
+      id: uid || "usr_" + Math.random().toString(36).substring(2, 11),
+      name: name || email.split("@")[0],
+      email: email.toLowerCase(),
+      phone: "+212 660-000000",
+      registrationDate: new Date().toISOString().split("T")[0],
+      lastLogin: new Date().toISOString().replace("T", " ").substring(0, 16),
+      subscription: isAdmin ? "Enterprise" : "Professional",
+      creditBalance: isAdmin ? 9999 : 150, // Starter credits for new surveyors
+      isBanned: false
+    };
+    db.users.push(user);
+    saveDb(db);
+    logAction("New User registered via Firebase", email);
+  } else {
+    // Update last login
+    user.lastLogin = new Date().toISOString().replace("T", " ").substring(0, 16);
+    saveDb(db);
+    logAction("User synced via Firebase", email);
+  }
+
+  if (user.isBanned) {
+    return res.status(403).json({ error: "Votre compte est suspendu. Contactez l'administrateur." });
+  }
+
+  // If maintenance mode is active, only Admin roles are allowed to enter
+  if (db.adminSettings?.maintenanceMode && !isAdmin) {
+    return res.status(403).json({ error: "Le portail est actuellement en mode maintenance. L'accès est réservé exclusivement aux administrateurs." });
+  }
+
+  res.json({
+    success: true,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      subscription: user.subscription,
+      creditBalance: user.creditBalance,
+      role: isAdmin ? "Admin" : "Surveyor"
+    }
+  });
+});
+
 // --- PROJECTS MANAGEMENT ---
 app.get("/api/projects", (req, res) => {
   const db = getDb();
