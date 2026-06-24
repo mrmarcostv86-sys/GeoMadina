@@ -75,7 +75,7 @@ async function initializeRealSqlDb() {
         createdAt VARCHAR(50),
         category VARCHAR(100),
         points TEXT,
-        lines TEXT,
+        \`lines\` TEXT,
         layers TEXT,
         boundarySurvey TEXT,
         parcelInvestigation TEXT,
@@ -138,7 +138,7 @@ async function initializeRealSqlDb() {
       // Seed projects
       for (const p of db.projects) {
         await connection.query(
-          `INSERT INTO projects (id, name, description, clientName, surveyorName, status, createdAt, category, points, lines, layers, boundarySurvey, parcelInvestigation, coordinateSystem, dtm, fileHistory)
+          `INSERT INTO projects (id, name, description, clientName, surveyorName, status, createdAt, category, points, \`lines\`, layers, boundarySurvey, parcelInvestigation, coordinateSystem, dtm, fileHistory)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             p.id, p.name, p.description || "", p.clientName || "", p.surveyorName || "", p.status, p.createdAt, p.category || "other",
