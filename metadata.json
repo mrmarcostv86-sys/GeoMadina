@@ -1,0 +1,11 @@
+{
+  "name": "GeoMadina",
+  "description": "Professional SaaS platform for surveying, CAD, GIS, land management, and AI geomatics.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
