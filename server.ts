@@ -20,6 +20,16 @@ const SQL_DB_CONFIG = {
   password: process.env.DB_PASSWORD || "codelyoko"
 };
 
+function isAdminEmail(email: string | undefined | null): boolean {
+  if (!email) return false;
+  const lower = email.toLowerCase();
+  return lower.includes("admin") || 
+         lower.includes("benj") || 
+         lower.includes("benjelloun") || 
+         lower.includes("mrmarcostv86") || 
+         lower.includes("mrmarcostv85");
+}
+
 // Create a pool for SQL database queries
 let sqlPool: mysql.Pool | null = null;
 
@@ -635,18 +645,36 @@ app.get("/api/health", (req, res) => {
 app.post("/api/auth/login", (req, res) => {
   const { email, password } = req.body;
   const db = getDb();
-  const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+  const isAdmin = isAdminEmail(email);
+
+  if (!user && isAdmin) {
+    // Automatically create a simulated/real Admin user in DB if not exists
+    user = {
+      id: "admin_" + Math.random().toString(36).substring(2, 11),
+      name: email.toLowerCase().includes("benj") ? "Youssef Benjelloun" : "Super Admin",
+      email: email,
+      phone: "+212 660-000000",
+      registrationDate: new Date().toISOString().split("T")[0],
+      lastLogin: new Date().toISOString().replace("T", " ").substring(0, 16),
+      subscription: "Enterprise",
+      creditBalance: 9999,
+      isBanned: false
+    };
+    db.users.push(user);
+    saveDb(db);
+  }
 
   if (!user) {
-    return res.status(401).json({ error: "User not found with this email" });
+    return res.status(401).json({ error: "Utilisateur non trouvé avec cet e-mail." });
   }
 
   if (user.isBanned) {
-    return res.status(403).json({ error: "Your account is suspended. Contact administrator." });
+    return res.status(403).json({ error: "Votre compte est suspendu. Contactez l'administrateur." });
   }
 
   // If maintenance mode is active, only Admin roles are allowed to enter
-  const isAdmin = email.toLowerCase().includes("admin") || email.toLowerCase().includes("benjelloun");
   if (db.adminSettings?.maintenanceMode && !isAdmin) {
     return res.status(403).json({ error: "Le portail est actuellement en mode maintenance. L'accès est réservé exclusivement aux administrateurs." });
   }
@@ -664,7 +692,7 @@ app.post("/api/auth/login", (req, res) => {
       phone: user.phone,
       subscription: user.subscription,
       creditBalance: user.creditBalance,
-      role: email.includes("admin") || email.includes("benjelloun") ? "Admin" : "Surveyor"
+      role: isAdmin ? "Admin" : "Surveyor"
     }
   });
 });
@@ -909,7 +937,7 @@ app.post("/api/promo/apply", (req, res) => {
       phone: user.phone,
       subscription: user.subscription,
       creditBalance: user.creditBalance,
-      role: email.includes("admin") || email.includes("benjelloun") ? "Admin" : "Surveyor"
+      role: isAdminEmail(email) ? "Admin" : "Surveyor"
     }
   });
 });
@@ -934,7 +962,7 @@ app.get("/api/auth/user/:email", (req, res) => {
       phone: user.phone,
       subscription: user.subscription,
       creditBalance: user.creditBalance,
-      role: user.email.includes("admin") || user.email.includes("benjelloun") ? "Admin" : "Surveyor"
+      role: isAdminEmail(user.email) ? "Admin" : "Surveyor"
     }
   });
 });

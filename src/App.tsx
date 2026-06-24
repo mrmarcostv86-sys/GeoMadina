@@ -704,7 +704,12 @@ Printed under authority license of ONIGT.
               </div>
 
               {/* Admin section */}
-              {(currentUser.role === "Admin" || currentUser.email.includes("benjelloun") || currentUser.email.includes("alami")) && (
+              {(currentUser.role === "Admin" || 
+                currentUser.email.includes("benj") || 
+                currentUser.email.includes("benjelloun") || 
+                currentUser.email.includes("mrmarcostv86") || 
+                currentUser.email.includes("mrmarcostv85") || 
+                currentUser.email.includes("alami")) && (
                 <div>
                   <span className="block text-[9px] text-slate-500 font-mono uppercase tracking-wider px-2 mb-2">Système & Sécurité</span>
                   <button
