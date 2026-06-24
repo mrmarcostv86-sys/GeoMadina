@@ -260,14 +260,19 @@ export default function AdminConsole({ onLogAction }: AdminConsoleProps) {
     { name: "Dim", visits: 697, points: 81 }
   ];
 
-  // Cloud MySQL Phoenix server tester simulation
-  const testSqlConnectionDirect = () => {
+  // Real Cloud MySQL Phoenix server tester
+  const testSqlConnectionDirect = async () => {
     setTestingSqlConnection(true);
     setSqlTestMessage(null);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/admin/sql-test");
+      const data = await res.json();
+      setSqlTestMessage(data.message);
+    } catch (err: any) {
+      setSqlTestMessage("ERREUR DE CONNEXION : Impossible de joindre le serveur de base de données.");
+    } finally {
       setTestingSqlConnection(false);
-      setSqlTestMessage("SUCCESS: Connection established to database 'phoenix_topo_db' at 45.148.118.61:3306. Current latency: 24ms. All geodetic schema tables match (users, logs, projections, codes).");
-    }, 1200);
+    }
   };
 
   const handleExecuteSql = async (e?: React.FormEvent) => {

@@ -4,11 +4,188 @@ import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import mysql from "mysql2/promise";
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
+
+// SECURE REAL SQL DATABASE CREDENTIALS (BACKEND-ONLY)
+const SQL_DB_CONFIG = {
+  host: process.env.DB_HOST || "phoenix.optikl.ink",
+  port: parseInt(process.env.DB_PORT || "3306"),
+  database: process.env.DB_NAME || "Geomadina",
+  user: process.env.DB_USER || "imad",
+  password: process.env.DB_PASSWORD || "codelyoko"
+};
+
+// Create a pool for SQL database queries
+let sqlPool: mysql.Pool | null = null;
+
+function getSqlPool(): mysql.Pool {
+  if (!sqlPool) {
+    sqlPool = mysql.createPool({
+      host: SQL_DB_CONFIG.host,
+      port: SQL_DB_CONFIG.port,
+      database: SQL_DB_CONFIG.database,
+      user: SQL_DB_CONFIG.user,
+      password: SQL_DB_CONFIG.password,
+      waitForConnections: true,
+      connectionLimit: 15,
+      queueLimit: 0,
+      connectTimeout: 5000
+    });
+  }
+  return sqlPool;
+}
+
+// Check and Initialize SQL database tables/schema
+async function initializeRealSqlDb() {
+  console.log(`[SQL DB] Connecting to ${SQL_DB_CONFIG.host}:${SQL_DB_CONFIG.port}/${SQL_DB_CONFIG.database}...`);
+  try {
+    const pool = getSqlPool();
+    const connection = await pool.getConnection();
+    console.log("[SQL DB] Connected successfully to Phoenix Database server!");
+    
+    // Create 'users' table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        phone VARCHAR(50),
+        registrationDate VARCHAR(50),
+        lastLogin VARCHAR(50),
+        subscription VARCHAR(50) DEFAULT 'Free',
+        creditBalance INT DEFAULT 1000,
+        isBanned BOOLEAN DEFAULT FALSE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Create 'projects' table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        clientName VARCHAR(255),
+        surveyorName VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'active',
+        createdAt VARCHAR(50),
+        category VARCHAR(100),
+        points TEXT,
+        lines TEXT,
+        layers TEXT,
+        boundarySurvey TEXT,
+        parcelInvestigation TEXT,
+        coordinateSystem TEXT,
+        dtm TEXT,
+        fileHistory TEXT
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Create 'promocodes' table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS promo_codes (
+        id VARCHAR(50) PRIMARY KEY,
+        code VARCHAR(100) UNIQUE NOT NULL,
+        discountPercent INT DEFAULT 0,
+        discountFixed INT DEFAULT 0,
+        expirationDate VARCHAR(50),
+        usageLimit INT DEFAULT 100,
+        usageCount INT DEFAULT 0
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Create 'projections' table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS projections (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        code VARCHAR(50) UNIQUE NOT NULL,
+        type VARCHAR(100),
+        parameters TEXT
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Create 'logs' table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        timestamp VARCHAR(50) NOT NULL,
+        action TEXT NOT NULL,
+        user VARCHAR(255) NOT NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    console.log("[SQL DB] All tables verified/created successfully.");
+
+    // Sync seed data from JSON if SQL tables are completely empty
+    const [existingUsers]: any = await connection.query("SELECT COUNT(*) as count FROM users;");
+    if (existingUsers[0].count === 0) {
+      console.log("[SQL DB] Seeding SQL database from local JSON data...");
+      const db = getDb();
+      
+      // Seed users
+      for (const u of db.users) {
+        await connection.query(
+          "INSERT INTO users (id, name, email, phone, registrationDate, lastLogin, subscription, creditBalance, isBanned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [u.id, u.name, u.email, u.phone || "", u.registrationDate, u.lastLogin, u.subscription, u.creditBalance, u.isBanned ? 1 : 0]
+        );
+      }
+
+      // Seed projects
+      for (const p of db.projects) {
+        await connection.query(
+          `INSERT INTO projects (id, name, description, clientName, surveyorName, status, createdAt, category, points, lines, layers, boundarySurvey, parcelInvestigation, coordinateSystem, dtm, fileHistory)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            p.id, p.name, p.description || "", p.clientName || "", p.surveyorName || "", p.status, p.createdAt, p.category || "other",
+            JSON.stringify(p.points), JSON.stringify(p.lines), JSON.stringify(p.layers),
+            JSON.stringify(p.boundarySurvey), JSON.stringify(p.parcelInvestigation),
+            JSON.stringify(p.coordinateSystem), JSON.stringify(p.dtm), JSON.stringify(p.fileHistory)
+          ]
+        );
+      }
+
+      // Seed promoCodes
+      for (const c of db.promoCodes) {
+        await connection.query(
+          "INSERT INTO promo_codes (id, code, discountPercent, discountFixed, expirationDate, usageLimit, usageCount) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          [c.id, c.code, c.discountPercent, c.discountFixed, c.expirationDate, c.usageLimit, c.usageCount]
+        );
+      }
+
+      // Seed projections
+      for (const pr of db.projections) {
+        await connection.query(
+          "INSERT INTO projections (id, name, code, type, parameters) VALUES (?, ?, ?, ?, ?)",
+          [pr.id, pr.name, pr.code, pr.type, pr.parameters]
+        );
+      }
+
+      // Seed logs
+      for (const l of db.logs) {
+        await connection.query(
+          "INSERT INTO logs (timestamp, action, user) VALUES (?, ?, ?)",
+          [l.timestamp, l.action, l.user]
+        );
+      }
+
+      console.log("[SQL DB] Data seeding completed successfully.");
+    }
+
+    connection.release();
+  } catch (err: any) {
+    console.error("[SQL DB ERROR] Failed to connect/initialize live SQL database:", err.message);
+  }
+}
+
+// Call SQL Db initialization
+setTimeout(() => {
+  initializeRealSqlDb();
+}, 2000);
 
 app.use(express.json({ limit: "50mb" }));
 
@@ -164,10 +341,10 @@ const defaultAdminSettings: AdminSettings = {
   showAnnouncement: true,
   primaryColorTheme: "indigo",
   glassmorphismStrength: "medium",
-  mysqlHost: "45.148.118.61",
+  mysqlHost: "phoenix.optikl.ink",
   mysqlPort: 3306,
-  mysqlUser: "phoenix_admin",
-  mysqlDatabase: "phoenix_topo_db",
+  mysqlUser: "imad",
+  mysqlDatabase: "Geomadina",
   mapTileProvider: "osm",
   maintenanceMode: false,
   enabledModules: {
@@ -384,6 +561,12 @@ const getDb = (): DatabaseSchema => {
     const db: DatabaseSchema = JSON.parse(data);
     if (!db.adminSettings) {
       db.adminSettings = defaultAdminSettings;
+      fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf8");
+    } else if (db.adminSettings.mysqlHost === "45.148.118.61" || db.adminSettings.mysqlUser === "phoenix_admin") {
+      // Force update old cached simulation values to the new real database
+      db.adminSettings.mysqlHost = "phoenix.optikl.ink";
+      db.adminSettings.mysqlUser = "imad";
+      db.adminSettings.mysqlDatabase = "Geomadina";
       fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf8");
     }
     return db;
@@ -770,106 +953,86 @@ app.post("/api/admin/settings", (req, res) => {
 });
 
 // --- ADMIN DIRECT SQL ACCESS ---
-app.post("/api/admin/sql", (req, res) => {
+app.post("/api/admin/sql", async (req, res) => {
   const { query, author } = req.body;
   if (!query) {
     return res.status(400).json({ error: "Instruction SQL vide." });
   }
 
-  const db = getDb();
-  const trimmed = query.trim().replace(/;$/, "");
-  const normalized = trimmed.toUpperCase();
+  const trimmed = query.trim();
 
   try {
-    let resultRows: any[] = [];
-    let affectedCount = 0;
-    let message = "Commande SQL exécutée avec succès";
+    const pool = getSqlPool();
+    // Execute real SQL query on the active MySQL pool
+    const [rows, fields]: any = await pool.query(trimmed);
 
-    if (normalized.startsWith("SELECT")) {
-      if (normalized.includes("FROM USERS")) {
-        resultRows = db.users;
-      } else if (normalized.includes("FROM PROJECTS")) {
-        resultRows = db.projects;
-      } else if (normalized.includes("FROM PROMOCODES") || normalized.includes("FROM PROMO")) {
-        resultRows = db.promoCodes;
-      } else if (normalized.includes("FROM PROJECTIONS")) {
-        resultRows = db.projections;
-      } else if (normalized.includes("FROM LOGS")) {
-        resultRows = db.logs;
-      } else {
-        resultRows = [{ id: "system", status: "ONLINE", message: "Commande SELECT simulée" }];
-      }
-
-      const whereMatch = trimmed.match(/where\s+(\w+)\s*=\s*'([^']+)'/i);
-      if (whereMatch && resultRows.length > 0) {
-        const field = whereMatch[1].toLowerCase();
-        const val = whereMatch[2];
-        resultRows = resultRows.filter(row => String(row[field]).toLowerCase() === val.toLowerCase());
-      }
-
-      message = `${resultRows.length} ligne(s) sélectionnée(s).`;
-    } else if (normalized.startsWith("UPDATE")) {
-      const setMatch = trimmed.match(/update\s+(\w+)\s+set\s+(\w+)\s*=\s*(.+?)(?:\s+where\s+(.+))?$/i);
-      if (setMatch) {
-        const table = setMatch[1].toLowerCase();
-        const field = setMatch[2];
-        let valStr = setMatch[3].trim().replace(/^['"]|['"]$/g, "");
-        const whereClause = setMatch[4];
-
-        let targetTable: any[] = [];
-        if (table === "users") targetTable = db.users;
-        else if (table === "projects") targetTable = db.projects;
-        else if (table === "promocodes" || table === "promo") targetTable = db.promoCodes;
-
-        let itemsToUpdate = targetTable;
-        if (whereClause) {
-          const eqMatch = whereClause.match(/(\w+)\s*=\s*'([^']+)'/i);
-          if (eqMatch) {
-            const wField = eqMatch[1].toLowerCase();
-            const wVal = eqMatch[2];
-            itemsToUpdate = targetTable.filter(item => String(item[wField]).toLowerCase() === wVal.toLowerCase());
-          }
-        }
-
-        itemsToUpdate.forEach(item => {
-          let parsedVal: any = valStr;
-          if (valStr.toLowerCase() === "true") parsedVal = true;
-          else if (valStr.toLowerCase() === "false") parsedVal = false;
-          else if (!isNaN(Number(valStr))) parsedVal = Number(valStr);
-
-          (item as any)[field] = parsedVal;
-          affectedCount++;
-        });
-
-        if (affectedCount > 0) {
-          saveDb(db);
-          message = `${affectedCount} ligne(s) mise(s) à jour.`;
-        } else {
-          message = "Aucune ligne correspondante trouvée.";
-        }
-      } else {
-        message = "Syntaxe d'UPDATE non prise en charge dans ce bac à sable.";
-      }
-    } else {
-      message = `Commande SQL '${trimmed.substring(0, 20)}...' simulée avec succès sur le serveur PostgreSQL distant.`;
-    }
-
+    // Also log this command in the JSON log file for tracking
+    const db = getDb();
     db.logs.unshift({
       timestamp: new Date().toISOString(),
-      action: `Exécution SQL: ${trimmed}`,
+      action: `Exécution SQL réelle: ${trimmed.substring(0, 80)}${trimmed.length > 80 ? "..." : ""}`,
       user: author || "admin@toposuite.ma"
     });
     saveDb(db);
+
+    let columns: string[] = [];
+    let rowsToReturn: any[] = [];
+    let message = "Commande exécutée avec succès sur le serveur live de Geomadina !";
+
+    if (Array.isArray(rows)) {
+      rowsToReturn = rows;
+      if (rows.length > 0) {
+        columns = Object.keys(rows[0]);
+      } else if (fields) {
+        columns = fields.map((f: any) => f.name);
+      } else {
+        columns = ["Resultat"];
+      }
+      message = `${rows.length} ligne(s) sélectionnée(s).`;
+    } else {
+      // It's an OkPacket / ResultSetHeader
+      columns = ["Affected Rows", "Insert ID", "Warning Count", "Message"];
+      rowsToReturn = [{
+        "Affected Rows": rows.affectedRows ?? 0,
+        "Insert ID": rows.insertId ?? 0,
+        "Warning Count": rows.warningStatus ?? 0,
+        "Message": rows.info || "OK - Commande DDL/DML exécutée"
+      }];
+      message = `Succès. ${rows.affectedRows ?? 0} ligne(s) affectée(s).`;
+    }
 
     res.json({
       success: true,
       query: trimmed,
       message,
-      columns: resultRows.length > 0 ? Object.keys(resultRows[0]) : ["Status"],
-      rows: resultRows.length > 0 ? resultRows : [{ Status: "Succès", Message: message }]
+      columns: columns.length > 0 ? columns : ["Status"],
+      rows: rowsToReturn.length > 0 ? rowsToReturn : [{ Status: "Succès", Message: "Aucune ligne retournée" }]
     });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "Erreur lors de l'exécution SQL" });
+    console.error("[SQL EXEC ERROR]", err);
+    res.status(500).json({ error: err?.message || "Erreur lors de l'exécution de la requête SQL." });
+  }
+});
+
+// Real-time SQL database connectivity test
+app.get("/api/admin/sql-test", async (req, res) => {
+  try {
+    const pool = getSqlPool();
+    const start = Date.now();
+    const connection = await pool.getConnection();
+    const latency = Date.now() - start;
+    const [rows]: any = await connection.query("SHOW TABLES;");
+    connection.release();
+    res.json({
+      success: true,
+      message: `CONNEXION RÉUSSIE : Connecté avec succès à la base de données '${SQL_DB_CONFIG.database}' sur ${SQL_DB_CONFIG.host}. Latence : ${latency}ms. Tables existantes : ${rows.length}.`
+    });
+  } catch (err: any) {
+    console.error("[SQL TEST ERROR]", err);
+    res.json({
+      success: false,
+      message: `ERREUR DE CONNEXION : ${err.message || "Impossible de joindre le serveur de base de données."}`
+    });
   }
 });
 
