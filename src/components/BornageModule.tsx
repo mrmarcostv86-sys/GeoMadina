@@ -160,8 +160,151 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
   });
   const [customCartoucheTemplateUploaded, setCustomCartoucheTemplateUploaded] = useState(false);
 
+  // Template design management states for background & cartouche design
+  const [availableTemplates, setAvailableTemplates] = useState<any[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [loadedBgImage, setLoadedBgImage] = useState<HTMLImageElement | null>(null);
+
+  // Fetch plan templates on mount
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const res = await fetch("/api/templates");
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableTemplates(data || []);
+          if (data && data.length > 0) {
+            setSelectedTemplateId(data[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading templates in BornageModule:", err);
+      }
+    };
+    fetchTemplates();
+  }, []);
+
+  // Pre-load background model design image on template change
+  useEffect(() => {
+    const selectedTmpl = availableTemplates.find(t => t.id === selectedTemplateId);
+    if (selectedTmpl && selectedTmpl.customImage) {
+      const img = new Image();
+      img.onload = () => {
+        setLoadedBgImage(img);
+      };
+      img.src = selectedTmpl.customImage;
+    } else {
+      setLoadedBgImage(null);
+    }
+  }, [selectedTemplateId, availableTemplates]);
+
+  // Interactive point states
+  const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
   // Ref for Plan canvas rendering
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Helper to convert canvas coordinates to real coordinates
+  const canvasToReal = (canvasX: number, canvasY: number) => {
+    if (!canvasRef.current) return { x: 0, y: 0 };
+    
+    // This needs to match the drawing logic in drawPlan
+    const mapWidth = 550;
+    const mapHeight = 580;
+    const xs = pointsList.map(p => p.x);
+    const ys = pointsList.map(p => p.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const centerPointX = (minX + maxX) / 2;
+    const centerPointY = (minY + maxY) / 2;
+    const padding = 80;
+    const scaleX = (mapWidth - padding * 2) / (maxX - minX || 1);
+    const scaleY = (mapHeight - padding * 2) / (maxY - minY || 1);
+    const drawScale = Math.min(scaleX, scaleY);
+    
+    return {
+      x: (canvasX - mapWidth / 2) / drawScale + centerPointX,
+      y: (mapHeight / 2 - canvasY) / drawScale + centerPointY
+    };
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const canvasX = e.clientX - rect.left;
+    const canvasY = e.clientY - rect.top;
+    
+    // Recalculate scale for hit detection
+    const mapWidth = 550;
+    const mapHeight = 580;
+    const xs = pointsList.map(p => p.x);
+    const ys = pointsList.map(p => p.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const padding = 80;
+    const scaleX = (mapWidth - padding * 2) / (maxX - minX || 1);
+    const scaleY = (mapHeight - padding * 2) / (maxY - minY || 1);
+    const drawScale = Math.min(scaleX, scaleY);
+
+    const real = canvasToReal(canvasX, canvasY);
+    
+    // Hit detection (check if click is near a point)
+    const clickedPoint = pointsList.find(pt => {
+      const dist = Math.sqrt((pt.x - real.x) ** 2 + (pt.y - real.y) ** 2);
+      return dist < 20 / drawScale; // Increased tolerance
+    });
+    
+    console.log("Clicked at:", real, "Point found:", clickedPoint);
+    
+    if (clickedPoint) {
+      setSelectedPointId(clickedPoint.id);
+      setIsDragging(true);
+      handleStartEditPoint(clickedPoint);
+    } else {
+      setSelectedPointId(null);
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !selectedPointId) return;
+    
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const canvasX = e.clientX - rect.left;
+    const canvasY = e.clientY - rect.top;
+    
+    const real = canvasToReal(canvasX, canvasY);
+    
+    const updatedPoints = pointsList.map(p => {
+      if (p.id === selectedPointId) {
+        return { ...p, x: real.x, y: real.y };
+      }
+      return p;
+    });
+    setPointsList(updatedPoints);
+  };
+  
+  const handleMouseUp = () => {
+    if (isDragging && selectedPointId) {
+      onUpdateProject({
+        ...project,
+        points: pointsList,
+        boundarySurvey: {
+          ...project.boundarySurvey,
+          monuments: pointsList.filter(p => p.code === "MON")
+        }
+      });
+      onLogAction(`Updated point ${selectedPointId} position.`);
+    }
+    setIsDragging(false);
+  };
+
 
   // Sync points from project when loaded
   useEffect(() => {
@@ -194,7 +337,7 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
   // Handle plan drawing on canvas
   useEffect(() => {
     drawPlan();
-  }, [pointsList, scale, customCartoucheTemplateUploaded, cartoucheTitleBlock, propertyName, propertyTitle]);
+  }, [pointsList, scale, customCartoucheTemplateUploaded, cartoucheTitleBlock, propertyName, propertyTitle, selectedTemplateId, availableTemplates, loadedBgImage]);
 
   // Shoelace formula for polygon area
   const calculateArea = () => {
@@ -233,6 +376,7 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
 
   // Plan CAD Drawings
   const drawPlan = () => {
+    const selectedTmpl = availableTemplates.find(t => t.id === selectedTemplateId);
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -245,6 +389,13 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
     // Clear background
     ctx.fillStyle = "#0B1220";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw the admin custom plan template design background if present
+    if (loadedBgImage) {
+      ctx.globalAlpha = 0.45; // Blend the design template background beautifully
+      ctx.drawImage(loadedBgImage, 0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 1.0;
+    }
 
     // If no points, show empty instructions
     if (pointsList.length === 0) {
@@ -293,41 +444,63 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
     };
 
     // Draw grid marks (+ crosshairs and coordinate numbers)
-    ctx.strokeStyle = "rgba(148, 163, 184, 0.15)";
-    ctx.lineWidth = 1;
-    
-    // Draw 4 intersection crosshairs with Moroccan Lambert coordinates
-    const gridXStep = 50; // Every 50m
-    const startGridX = Math.floor(minX / gridXStep) * gridXStep;
-    const startGridY = Math.floor(minY / gridXStep) * gridXStep;
+    const hasGrid = selectedTmpl ? selectedTmpl.hasBorderGrid : true;
+    const borderStyle = selectedTmpl ? selectedTmpl.borderStyle : "grid";
 
-    for (let gx = startGridX - gridXStep; gx <= maxX + gridXStep; gx += gridXStep) {
-      const cx = toCanvasX(gx);
-      if (cx > 20 && cx < mapWidth - 20) {
-        ctx.beginPath();
-        ctx.moveTo(cx, 15);
-        ctx.lineTo(cx, mapHeight - 15);
-        ctx.stroke();
+    if (hasGrid) {
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.15)";
+      ctx.lineWidth = 1;
+      
+      const gridXStep = 50; // Every 50m
+      const startGridX = Math.floor(minX / gridXStep) * gridXStep;
+      const startGridY = Math.floor(minY / gridXStep) * gridXStep;
 
-        // Label on grid line
-        ctx.fillStyle = "#94A3B8";
-        ctx.font = "8px monospace";
-        ctx.fillText(`+ ${gx.toFixed(0)}`, cx + 2, mapHeight - 15);
+      // Draw grid lines or crosshairs
+      for (let gx = startGridX - gridXStep; gx <= maxX + gridXStep; gx += gridXStep) {
+        const cx = toCanvasX(gx);
+        if (cx > 20 && cx < mapWidth - 20) {
+          if (borderStyle !== "technical") {
+            ctx.beginPath();
+            ctx.moveTo(cx, 15);
+            ctx.lineTo(cx, mapHeight - 15);
+            ctx.stroke();
+          }
+
+          // Label on grid line
+          ctx.fillStyle = "#94A3B8";
+          ctx.font = "8px monospace";
+          ctx.fillText(`+ ${gx.toFixed(0)}`, cx + 2, mapHeight - 15);
+        }
       }
-    }
 
-    for (let gy = startGridY - gridXStep; gy <= maxY + gridXStep; gy += gridXStep) {
-      const cy = toCanvasY(gy);
-      if (cy > 20 && cy < mapHeight - 20) {
-        ctx.beginPath();
-        ctx.moveTo(15, cy);
-        ctx.lineTo(mapWidth - 15, cy);
-        ctx.stroke();
+      for (let gy = startGridY - gridXStep; gy <= maxY + gridXStep; gy += gridXStep) {
+        const cy = toCanvasY(gy);
+        if (cy > 20 && cy < mapHeight - 20) {
+          if (borderStyle !== "technical") {
+            ctx.beginPath();
+            ctx.moveTo(15, cy);
+            ctx.lineTo(mapWidth - 15, cy);
+            ctx.stroke();
+          } else {
+            // Technical style: draw little crosshairs '+' at grid intersections
+            for (let gx = startGridX - gridXStep; gx <= maxX + gridXStep; gx += gridXStep) {
+              const cx = toCanvasX(gx);
+              if (cx > 20 && cx < mapWidth - 20) {
+                ctx.beginPath();
+                ctx.moveTo(cx - 5, cy);
+                ctx.lineTo(cx + 5, cy);
+                ctx.moveTo(cx, cy - 5);
+                ctx.lineTo(cx, cy + 5);
+                ctx.stroke();
+              }
+            }
+          }
 
-        // Label on grid line
-        ctx.fillStyle = "#94A3B8";
-        ctx.font = "8px monospace";
-        ctx.fillText(`+ ${gy.toFixed(0)}`, 20, cy - 3);
+          // Label on grid line
+          ctx.fillStyle = "#94A3B8";
+          ctx.font = "8px monospace";
+          ctx.fillText(`+ ${gy.toFixed(0)}`, 20, cy - 3);
+        }
       }
     }
 
@@ -345,6 +518,34 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
     // Draw translucent red fill inside parcel
     ctx.fillStyle = "rgba(226, 46, 92, 0.08)";
     ctx.fill();
+
+    // Draw vegetation trees if enabled by template
+    if (selectedTmpl && selectedTmpl.hasVegetation) {
+      const vegStyle = selectedTmpl.vegetationStyle || "classic";
+      const stepX = (maxX - minX) / 3;
+      const stepY = (maxY - minY) / 3;
+      
+      for (let vx = minX + 15; vx < maxX; vx += stepX || 30) {
+        for (let vy = minY + 15; vy < maxY; vy += stepY || 30) {
+          const cx = toCanvasX(vx);
+          const cy = toCanvasY(vy);
+          // Only draw inside drawing region
+          if (cx > 30 && cx < mapWidth - 30 && cy > 30 && cy < mapHeight - 30) {
+            ctx.font = "12px sans-serif";
+            ctx.textAlign = "center";
+            if (vegStyle === "classic") {
+              ctx.fillText("🌴", cx, cy);
+            } else if (vegStyle === "dense") {
+              ctx.fillText("🌳", cx, cy);
+              ctx.fillText("🌴", cx + 8, cy + 5);
+            } else {
+              ctx.fillText("🌱", cx, cy);
+            }
+            ctx.textAlign = "left";
+          }
+        }
+      }
+    }
 
     // DRAW EACH MONUMENT & POINT
     pointsList.forEach((pt, index) => {
@@ -464,7 +665,8 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
     ctx.fillStyle = "#0F172A";
     ctx.fillRect(cxStart + 2, 12, 218, canvas.height - 24);
 
-    // Section 1: Administration Cadastre Maroc
+    // Section 1: Administration Cadastre Maroc / Template title block
+
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "bold 8px sans-serif";
     ctx.textAlign = "center";
@@ -472,7 +674,8 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
     ctx.fillText("CONSERVATION FONCIÈRE ET DU CADASTRE", cxStart + 110, 42);
     
     ctx.fillStyle = "#E22E5C";
-    ctx.fillText("DIRECTION DU CADASTRE", cxStart + 110, 56);
+    const headTitle = selectedTmpl ? selectedTmpl.cartoucheTitle : "DIRECTION DU CADASTRE";
+    ctx.fillText(headTitle.substring(0, 34), cxStart + 110, 56);
 
     ctx.strokeStyle = "#475569";
     ctx.beginPath();
@@ -544,18 +747,21 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
     ctx.stroke();
 
     // Section 5: Metadata Cartouche
+    const currentSurveyorCompany = selectedTmpl ? selectedTmpl.orgName : cartoucheTitleBlock.surveyorCompany;
+    const currentScaleText = selectedTmpl ? selectedTmpl.scaleText : `Échelle: 1/${scale}`;
+
     ctx.fillStyle = "#94A3B8";
     ctx.font = "8px sans-serif";
     ctx.fillText("PLAN ÉTABLI PAR :", cxStart + 10, 440);
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "bold 9px sans-serif";
-    ctx.fillText(cartoucheTitleBlock.surveyorCompany, cxStart + 10, 452);
+    ctx.fillText(currentSurveyorCompany, cxStart + 10, 452);
     
     ctx.fillStyle = "#94A3B8";
     ctx.font = "8px sans-serif";
     ctx.fillText("Ingénieur Géomètre Topographe (ONIGT) :", cxStart + 10, 470);
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillText(cartoucheTitleBlock.surveyorLicense, cxStart + 10, 482);
+    ctx.fillText(selectedTmpl ? "Décision ONIGT N° 458-12 (Cabinet)" : cartoucheTitleBlock.surveyorLicense, cxStart + 10, 482);
 
     ctx.fillStyle = "#94A3B8";
     ctx.fillText("Date de levé mobile / bureau :", cxStart + 10, 502);
@@ -567,6 +773,19 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
     ctx.fillStyle = "#38BDF8";
     ctx.font = "bold 9px monospace";
     ctx.fillText(project.coordinateSystem.name, cxStart + 10, 545);
+
+    // Render custom logo type indicator if available
+    if (selectedTmpl) {
+      ctx.fillStyle = "rgba(16, 185, 129, 0.15)";
+      ctx.fillRect(cxStart + 10, 385, 200, 24);
+      ctx.strokeStyle = "rgba(16, 185, 129, 0.4)";
+      ctx.strokeRect(cxStart + 10, 385, 200, 24);
+      ctx.fillStyle = "#10B981";
+      ctx.font = "bold 8px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(`LOGO CHARGÉ: ${selectedTmpl.logoType.toUpperCase()}`, cxStart + 110, 400);
+      ctx.textAlign = "left";
+    }
 
     // Watermark / Signature section in cartouche
     ctx.strokeStyle = "rgba(0, 245, 212, 0.2)";
@@ -968,11 +1187,85 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
             <div className="relative border border-slate-800 rounded-xl overflow-hidden bg-slate-950 flex justify-center">
               <canvas
                 ref={canvasRef}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
                 className="w-full max-w-[800px] aspect-[4/3] block"
               />
+
+              {/* Point Editor Overlay */}
+              {editingPointId && (
+                <div className="absolute top-4 right-4 bg-slate-950/90 border border-slate-700 p-4 rounded-xl text-white shadow-2xl z-10 w-64 space-y-3">
+                  <div className="text-sm font-bold flex justify-between items-center">
+                    <span>Modifier Point</span>
+                    <button onClick={() => setEditingPointId(null)} className="text-slate-500 hover:text-white">✕</button>
+                  </div>
+                  <input
+                    value={editPtName}
+                    onChange={(e) => setEditPtName(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-sm"
+                    placeholder="Nom"
+                  />
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      value={editPtX}
+                      onChange={(e) => setEditPtX(e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded p-1.5 text-sm"
+                      placeholder="X"
+                    />
+                    <input
+                      value={editPtY}
+                      onChange={(e) => setEditPtY(e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded p-1.5 text-sm"
+                      placeholder="Y"
+                    />
+                    <input
+                      value={editPtZ}
+                      onChange={(e) => setEditPtZ(e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded p-1.5 text-sm"
+                      placeholder="Z"
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => handleSaveEditPoint(editingPointId)}
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 rounded-lg"
+                    >
+                      Enregistrer
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleDeletePoint(editingPointId);
+                        setEditingPointId(null);
+                      }}
+                      className="px-3 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               
               {/* Floating control bar */}
-              <div className="absolute bottom-4 left-4 bg-slate-900/90 border border-slate-800 p-2 rounded-lg flex gap-2">
+              <div className="absolute bottom-4 left-4 bg-slate-900/90 border border-slate-800 p-2 rounded-lg flex gap-3 items-center flex-wrap max-w-sm md:max-w-xl">
+                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded border border-slate-800 text-[10px]">
+                  <span className="text-indigo-400 font-mono font-bold">MODELE CADASTRE :</span>
+                  <select
+                    value={selectedTemplateId}
+                    onChange={(e) => setSelectedTemplateId(e.target.value)}
+                    className="bg-transparent text-slate-200 font-sans font-bold focus:outline-none cursor-pointer"
+                  >
+                    <option value="" className="bg-slate-900 text-slate-400">Standard (Vide)</option>
+                    {availableTemplates.map((t) => (
+                      <option key={t.id} value={t.id} className="bg-slate-900 text-white">
+                        {t.name} ({t.category})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <button
                   onClick={() => {
                     setCustomCartoucheTemplateUploaded(!customCartoucheTemplateUploaded);
@@ -982,7 +1275,7 @@ export default function BornageModule({ project, onUpdateProject, onLogAction }:
                     customCartoucheTemplateUploaded ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-300"
                   }`}
                 >
-                  {customCartoucheTemplateUploaded ? "✓ GABARIT MOROCCO CHARGÉ" : "CHARGER GABARIT CARTOUCHE"}
+                  {customCartoucheTemplateUploaded ? "✓ GABARIT MAROC REQUIS" : "SATELLITE GABARIT"}
                 </button>
               </div>
             </div>

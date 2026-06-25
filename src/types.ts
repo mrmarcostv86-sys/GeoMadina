@@ -94,6 +94,24 @@ export interface PromoCode {
   usageCount: number;
 }
 
+export interface PlanTemplate {
+  id: string;
+  name: string;
+  category: string;
+  cartoucheTitle: string;
+  orgName: string;
+  logoType: string;
+  customImage: string | null;
+  hasVegetation: boolean;
+  hasBorderGrid: boolean;
+  vegetationStyle: "classic" | "dense" | "minimal";
+  borderStyle: "simple" | "grid" | "technical";
+  notes: string;
+  scaleText: string;
+  northArrowType: "classic" | "modern" | "compass";
+  createdAt: string;
+}
+
 export interface AppUser {
   id: string;
   name: string;

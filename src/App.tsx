@@ -49,6 +49,7 @@ import FicheReception from "./components/FicheReception";
 import MyProjectHub from "./components/MyProjectHub";
 import BornageModule from "./components/BornageModule";
 import ConsultationModule from "./components/ConsultationModule";
+import ListingPointModule from "./components/ListingPointModule";
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<{
@@ -890,6 +891,7 @@ Printed under authority license of ONIGT.
                 <div className="space-y-1">
                   {[
                     { label: "My Project", tab: "my-project", icon: "📂", id: "project" },
+                    { label: "Listing Point", tab: "listing-point", icon: "📋", id: "listing" },
                     { label: "Fiche de Réception", tab: "reception", icon: "🧾", id: "reception" },
                     { label: "Mapping", tab: "gis", icon: "🗺️", id: "gis" },
                     { label: "Bornage", tab: "bornage", icon: "🏦", id: "bornage" },
@@ -1103,6 +1105,21 @@ Printed under authority license of ONIGT.
                     setSelectedProjectId={setSelectedProjectId}
                     onCreateProject={handleCreateProjectWithArgs}
                     onSelectTab={setActiveTab}
+                  />
+                </motion.div>
+              )}
+
+              {activeTab === "listing-point" && activeProject && (
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <ListingPointModule
+                    pointsList={activeProject.points}
+                    onEditPoint={(pt) => { console.log("Edit", pt); }}
+                    onDeletePoint={(id) => { console.log("Delete", id); }}
+                    onUploadPoints={(e) => { console.log("Upload", e); }}
                   />
                 </motion.div>
               )}

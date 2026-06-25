@@ -25,7 +25,8 @@ import {
   Database,
   Server,
   Settings,
-  Globe
+  Globe,
+  Layers
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -43,9 +44,26 @@ export default function AdminConsole({ onLogAction }: AdminConsoleProps) {
   
   // Custom interactive tabs inspired by image.png
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "users" | "premium" | "modules" | "promos" | "billing" | "projections" | "documents" | "security" | "logs" | "affaires" | "settings"
+    "dashboard" | "users" | "premium" | "modules" | "promos" | "billing" | "projections" | "documents" | "templates" | "security" | "logs" | "affaires" | "settings"
   >("dashboard");
   const [activeSubTab, setActiveSubTab] = useState<"general" | "theme" | "sql" | "maps" | "system">("general");
+
+  // Template design management states
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [templateName, setTemplateName] = useState("");
+  const [templateCategory, setTemplateCategory] = useState("all");
+  const [templateCartoucheTitle, setTemplateCartoucheTitle] = useState("PLAN DE REPERAGE / BORNAGE");
+  const [templateOrgName, setTemplateOrgName] = useState("CABINET DE TOPOGRAPHIE BAHI NAJIB");
+  const [templateLogoType, setTemplateLogoType] = useState("bahi_najib");
+  const [templateCustomImage, setTemplateCustomImage] = useState<string | null>(null);
+  const [templateHasVegetation, setTemplateHasVegetation] = useState(true);
+  const [templateHasBorderGrid, setTemplateHasBorderGrid] = useState(true);
+  const [templateVegetationStyle, setTemplateVegetationStyle] = useState<"classic" | "dense" | "minimal">("classic");
+  const [templateBorderStyle, setTemplateBorderStyle] = useState<"simple" | "grid" | "technical">("grid");
+  const [templateNotes, setTemplateNotes] = useState("");
+  const [templateScaleText, setTemplateScaleText] = useState("Échelle: 1/1000");
+  const [templateNorthArrowType, setTemplateNorthArrowType] = useState<"classic" | "modern" | "compass">("classic");
 
   // State for forms
   const [newProjName, setNewProjName] = useState("");
@@ -84,22 +102,24 @@ export default function AdminConsole({ onLogAction }: AdminConsoleProps) {
   // Fetch all admin data
   const fetchAdminData = async () => {
     try {
-      const [usersRes, projRes, promoRes, logsRes, projectsRes, settingsRes] = await Promise.all([
+      const [usersRes, projRes, promoRes, logsRes, projectsRes, settingsRes, templatesRes] = await Promise.all([
         fetch("/api/admin/users"),
         fetch("/api/projections"),
         fetch("/api/promo"),
         fetch("/api/admin/logs"),
         fetch("/api/projects"),
-        fetch("/api/admin/settings")
+        fetch("/api/admin/settings"),
+        fetch("/api/templates")
       ]);
 
-      const [usersData, projData, promoData, logsData, projectsData, settingsData] = await Promise.all([
+      const [usersData, projData, promoData, logsData, projectsData, settingsData, templatesData] = await Promise.all([
         usersRes.json(),
         projRes.json(),
         promoRes.json(),
         logsRes.json(),
         projectsRes.json(),
-        settingsRes.json()
+        settingsRes.json(),
+        templatesRes.json()
       ]);
 
       setUsers(usersData || []);
@@ -108,6 +128,7 @@ export default function AdminConsole({ onLogAction }: AdminConsoleProps) {
       setLogs(logsData || []);
       setProjects(projectsData || []);
       setAdminSettings(settingsData);
+      setTemplates(templatesData || []);
     } catch (err) {
       console.error("Error fetching admin console data:", err);
     }
@@ -189,6 +210,95 @@ export default function AdminConsole({ onLogAction }: AdminConsoleProps) {
     } catch (err) {
       console.error("Could not drop projection:", err);
     }
+  };
+
+  const handleSaveTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!templateName) return;
+
+    try {
+      const res = await fetch("/api/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingTemplateId,
+          name: templateName,
+          category: templateCategory,
+          cartoucheTitle: templateCartoucheTitle,
+          orgName: templateOrgName,
+          logoType: templateLogoType,
+          customImage: templateCustomImage,
+          hasVegetation: templateHasVegetation,
+          hasBorderGrid: templateHasBorderGrid,
+          vegetationStyle: templateVegetationStyle,
+          borderStyle: templateBorderStyle,
+          notes: templateNotes,
+          scaleText: templateScaleText,
+          northArrowType: templateNorthArrowType
+        })
+      });
+
+      if (res.ok) {
+        onLogAction(`Saved plan template: ${templateName}`);
+        setEditingTemplateId(null);
+        setTemplateName("");
+        setTemplateCategory("all");
+        setTemplateCartoucheTitle("PLAN DE REPERAGE / BORNAGE");
+        setTemplateOrgName("CABINET DE TOPOGRAPHIE BAHI NAJIB");
+        setTemplateLogoType("bahi_najib");
+        setTemplateCustomImage(null);
+        setTemplateHasVegetation(true);
+        setTemplateHasBorderGrid(true);
+        setTemplateVegetationStyle("classic");
+        setTemplateBorderStyle("grid");
+        setTemplateNotes("");
+        setTemplateScaleText("Échelle: 1/1000");
+        setTemplateNorthArrowType("classic");
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error("Could not write plan template:", err);
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce modèle de plan ?")) return;
+    try {
+      const res = await fetch(`/api/templates/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        onLogAction(`Deleted plan template ${id}`);
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error("Could not drop template:", err);
+    }
+  };
+
+  const handleEditTemplate = (tmpl: any) => {
+    setEditingTemplateId(tmpl.id);
+    setTemplateName(tmpl.name);
+    setTemplateCategory(tmpl.category || "all");
+    setTemplateCartoucheTitle(tmpl.cartoucheTitle || "PLAN DE REPERAGE / BORNAGE");
+    setTemplateOrgName(tmpl.orgName || "");
+    setTemplateLogoType(tmpl.logoType || "bahi_najib");
+    setTemplateCustomImage(tmpl.customImage || null);
+    setTemplateHasVegetation(tmpl.hasVegetation !== undefined ? tmpl.hasVegetation : true);
+    setTemplateHasBorderGrid(tmpl.hasBorderGrid !== undefined ? tmpl.hasBorderGrid : true);
+    setTemplateVegetationStyle(tmpl.vegetationStyle || "classic");
+    setTemplateBorderStyle(tmpl.borderStyle || "grid");
+    setTemplateNotes(tmpl.notes || "");
+    setTemplateScaleText(tmpl.scaleText || "Échelle: 1/1000");
+    setTemplateNorthArrowType(tmpl.northArrowType || "classic");
+  };
+
+  const handleTemplateLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setTemplateCustomImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleAddPromo = async (e: React.FormEvent) => {
@@ -511,6 +621,18 @@ export default function AdminConsole({ onLogAction }: AdminConsoleProps) {
             >
               <FileText className="w-4 h-4" />
               <span>Documents</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("templates")}
+              className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center space-x-2.5 shrink-0 ${
+                activeTab === "templates"
+                  ? "bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/10"
+                  : "text-slate-400 hover:text-white hover:bg-[#1E293B]/40"
+              }`}
+            >
+              <Layers className="w-4 h-4 text-pink-400" />
+              <span>Modèles de Plans ({templates.length})</span>
             </button>
 
             <button
@@ -1247,6 +1369,325 @@ export default function AdminConsole({ onLogAction }: AdminConsoleProps) {
                   <button className="px-3 py-1.5 bg-[#1E293B] hover:bg-slate-700 text-white rounded font-bold cursor-pointer w-full">Utiliser ce Modèle</button>
                 </div>
 
+              </div>
+            </div>
+          )}
+
+          {/* TEMPLATES TAB */}
+          {activeTab === "templates" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="space-y-0.5">
+                  <h3 className="text-md font-bold text-white">Gestionnaire de Modèles de Plans & Cartouches</h3>
+                  <p className="text-xs text-slate-400">
+                    Définissez les modèles de plans graphiques qui encapsuleront les levés topographiques dans tout le site.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 text-xs">
+                {/* List of current templates */}
+                <div className="xl:col-span-2 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {templates.map((tmpl) => (
+                      <div key={tmpl.id} className="bg-[#080C16] border border-slate-800 rounded-xl p-4 flex flex-col justify-between space-y-4 hover:border-slate-700 transition-all">
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <span className="bg-indigo-900/40 text-indigo-300 font-mono text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                {tmpl.category}
+                              </span>
+                              <h4 className="font-bold text-slate-200 mt-1.5 text-sm">{tmpl.name}</h4>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <button
+                                onClick={() => handleEditTemplate(tmpl)}
+                                className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded cursor-pointer"
+                                title="Modifier"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTemplate(tmpl.id)}
+                                className="p-1 text-red-400 hover:text-red-300 hover:bg-slate-800 rounded cursor-pointer"
+                                title="Supprimer"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1 pt-1 text-[11px] text-slate-400 font-sans border-t border-slate-900/60">
+                            <p><strong className="text-slate-300">Cartouche:</strong> {tmpl.cartoucheTitle}</p>
+                            <p><strong className="text-slate-300">Cabinet:</strong> {tmpl.orgName}</p>
+                            <p><strong className="text-slate-300">Logo:</strong> <span className="font-mono text-[10px] text-pink-400">{tmpl.logoType}</span></p>
+                            <p><strong className="text-slate-300">Bordure:</strong> {tmpl.borderStyle} (Grid: {tmpl.hasBorderGrid ? "Oui" : "Non"})</p>
+                            <p><strong className="text-slate-300 font-mono text-emerald-400 font-bold">Végétation:</strong> {tmpl.hasVegetation ? `${tmpl.vegetationStyle}` : "Aucune"}</p>
+                          </div>
+                        </div>
+
+                        {/* Miniature layout simulation */}
+                        <div className="relative h-28 bg-slate-950 rounded-lg border border-slate-900 overflow-hidden flex flex-col justify-between p-2 font-mono text-[8px] text-slate-500">
+                          {/* Simulated border coordinates */}
+                          {tmpl.hasBorderGrid && (
+                            <>
+                              <div className="absolute top-0.5 left-1/2 -translate-x-1/2 text-[7px]">Y: 340 000</div>
+                              <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[7px]">Y: 339 000</div>
+                              <div className="absolute left-0.5 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[7px]">X: 370 000</div>
+                              <div className="absolute right-0.5 top-1/2 -translate-y-1/2 rotate-90 origin-right text-[7px]">X: 371 000</div>
+                            </>
+                          )}
+                          
+                          {/* Custom background image preview if uploaded */}
+                          {tmpl.customImage && (
+                            <img src={tmpl.customImage} className="absolute inset-0 w-full h-full object-cover opacity-10 pointer-events-none" />
+                          )}
+
+                          {/* Outer frame */}
+                          <div className="absolute inset-1.5 border border-dashed border-slate-850 pointer-events-none rounded"></div>
+
+                          {/* North arrow */}
+                          <div className="absolute top-3 right-3 flex flex-col items-center opacity-60">
+                            {tmpl.northArrowType === "classic" && <span className="text-sm">⬆️ N</span>}
+                            {tmpl.northArrowType === "modern" && <span className="text-sm">🧭 N</span>}
+                            {tmpl.northArrowType === "compass" && <span className="text-xs">⭐ N</span>}
+                          </div>
+
+                          {/* Vegetation items */}
+                          {tmpl.hasVegetation && (
+                            <div className="absolute bottom-3 left-3 flex space-x-1 opacity-50">
+                              {tmpl.vegetationStyle === "classic" && <span>🌴🌳</span>}
+                              {tmpl.vegetationStyle === "dense" && <span>🌴🌳🌿🌲</span>}
+                              {tmpl.vegetationStyle === "minimal" && <span>🌱</span>}
+                            </div>
+                          )}
+
+                          {/* Title block box in corner */}
+                          <div className="absolute bottom-1.5 right-1.5 w-24 bg-[#0B1220] border border-slate-800 p-1 rounded text-[7px] space-y-0.5 text-slate-400">
+                            <div className="font-bold border-b border-slate-900 pb-0.5 text-[8px] text-indigo-400 truncate">{tmpl.orgName}</div>
+                            <div className="truncate">{tmpl.cartoucheTitle}</div>
+                            <div>{tmpl.scaleText}</div>
+                          </div>
+
+                          <div className="text-[7px] text-slate-600 self-start z-10">Modèle: {tmpl.name}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Create/Edit Form */}
+                <div className="bg-[#080C16] border border-slate-800 rounded-xl p-5 space-y-4">
+                  <h4 className="font-bold text-slate-100 text-sm flex items-center space-x-2 border-b border-slate-800 pb-2">
+                    <span>{editingTemplateId ? "✏️ Modifier le Modèle" : "➕ Nouveau Modèle de Plan"}</span>
+                  </h4>
+
+                  <form onSubmit={handleSaveTemplate} className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="block text-[10px] text-slate-400 font-mono uppercase font-bold">Nom du Modèle</label>
+                      <input
+                        type="text"
+                        required
+                        value={templateName}
+                        onChange={(e) => setTemplateName(e.target.value)}
+                        placeholder="Ex: Modèle Cadastral Standard"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="block text-[10px] text-slate-400 font-mono uppercase font-bold">Catégorie</label>
+                        <select
+                          value={templateCategory}
+                          onChange={(e) => setTemplateCategory(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+                        >
+                          <option value="all">Toutes</option>
+                          <option value="Cadastral">Cadastral</option>
+                          <option value="Situation">Plan de Situation</option>
+                          <option value="Bornage">Bornage</option>
+                          <option value="Voirie">Voirie</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-[10px] text-slate-400 font-mono uppercase font-bold">Flèche Nord</label>
+                        <select
+                          value={templateNorthArrowType}
+                          onChange={(e) => setTemplateNorthArrowType(e.target.value as any)}
+                          className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+                        >
+                          <option value="classic">Flèche Classique</option>
+                          <option value="modern">Boussole Moderne</option>
+                          <option value="compass">Rose des Vents</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-[10px] text-slate-400 font-mono uppercase font-bold">Titre du Cartouche</label>
+                      <input
+                        type="text"
+                        value={templateCartoucheTitle}
+                        onChange={(e) => setTemplateCartoucheTitle(e.target.value)}
+                        placeholder="Ex: PLAN DE RECOLEMENT RESEAUX"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-[10px] text-slate-400 font-mono uppercase font-bold">Nom de l'Organisme / Cabinet</label>
+                      <input
+                        type="text"
+                        value={templateOrgName}
+                        onChange={(e) => setTemplateOrgName(e.target.value)}
+                        placeholder="Ex: CABINET DE TOPOGRAPHIE ALAMI"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="block text-[10px] text-slate-400 font-mono uppercase font-bold">Logo Cartouche</label>
+                        <select
+                          value={templateLogoType}
+                          onChange={(e) => setTemplateLogoType(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+                        >
+                          <option value="bahi_najib">Bahi Najib (Rouge)</option>
+                          <option value="tgcc">TGCC (Bleu/Rouge)</option>
+                          <option value="bettan">Bettan (Cyan)</option>
+                          <option value="anep">ANEP (Bleu Marine)</option>
+                          <option value="maroc">Étoile Maroc (Vert/Or)</option>
+                          <option value="custom">Logo Customisé (Uploader)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-[10px] text-slate-400 font-mono uppercase font-bold">Échelle par Défaut</label>
+                        <input
+                          type="text"
+                          value={templateScaleText}
+                          onChange={(e) => setTemplateScaleText(e.target.value)}
+                          placeholder="Ex: 1/1000"
+                          className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Custom model file uploader */}
+                    <div className="space-y-1">
+                      <label className="block text-[10px] text-slate-400 font-mono uppercase font-bold">Image Design / Layout (Exemple de fond)</label>
+                      <div className="border border-dashed border-slate-800 bg-slate-950 rounded-lg p-3 text-center space-y-2 hover:border-slate-700 transition-all relative">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleTemplateLogoFileChange}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <div className="text-slate-400 text-[11px]">
+                          {templateCustomImage ? (
+                            <div className="flex items-center justify-center space-x-2 text-emerald-400">
+                              <span>✓ Image chargée</span>
+                              <img src={templateCustomImage} className="w-8 h-8 rounded border border-slate-800 object-cover" />
+                            </div>
+                          ) : (
+                            <span>Cliquez pour uploader le plan design</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Toggles */}
+                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-900 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-300">Afficher la Végétation :</span>
+                        <input
+                          type="checkbox"
+                          checked={templateHasVegetation}
+                          onChange={(e) => setTemplateHasVegetation(e.target.checked)}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+                      </div>
+
+                      {templateHasVegetation && (
+                        <div className="flex items-center justify-between pl-4">
+                          <span className="text-slate-400 text-[11px]">Style :</span>
+                          <select
+                            value={templateVegetationStyle}
+                            onChange={(e) => setTemplateVegetationStyle(e.target.value as any)}
+                            className="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 focus:outline-none"
+                          >
+                            <option value="classic">Classique (Palmiers)</option>
+                            <option value="dense">Forêt Dense (Eucalyptus)</option>
+                            <option value="minimal">Minimaliste (Arbustes)</option>
+                          </select>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-300">Cadre & Grille Lambert Maroc :</span>
+                        <input
+                          type="checkbox"
+                          checked={templateHasBorderGrid}
+                          onChange={(e) => setTemplateHasBorderGrid(e.target.checked)}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+                      </div>
+
+                      {templateHasBorderGrid && (
+                        <div className="flex items-center justify-between pl-4">
+                          <span className="text-slate-400 text-[11px]">Type :</span>
+                          <select
+                            value={templateBorderStyle}
+                            onChange={(e) => setTemplateBorderStyle(e.target.value as any)}
+                            className="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 focus:outline-none"
+                          >
+                            <option value="grid">Grille Lambert Complète</option>
+                            <option value="technical">Croillons Topo</option>
+                            <option value="simple">Bordure simple</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-[10px] text-slate-400 font-mono uppercase font-bold">Notes administratives & Légende</label>
+                      <textarea
+                        value={templateNotes}
+                        onChange={(e) => setTemplateNotes(e.target.value)}
+                        placeholder="Province de Rabat..."
+                        rows={2}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-sans"
+                      />
+                    </div>
+
+                    <div className="flex space-x-3 pt-2">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition-colors cursor-pointer"
+                      >
+                        {editingTemplateId ? "Enregistrer" : "Créer le Modèle"}
+                      </button>
+                      {editingTemplateId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingTemplateId(null);
+                            setTemplateName("");
+                            setTemplateOrgName("");
+                            setTemplateNotes("");
+                            setTemplateCustomImage(null);
+                          }}
+                          className="px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-lg transition-colors cursor-pointer"
+                        >
+                          Annuler
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           )}

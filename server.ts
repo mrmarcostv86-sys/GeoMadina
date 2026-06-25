@@ -334,6 +334,24 @@ interface AdminSettings {
   };
 }
 
+interface PlanTemplate {
+  id: string;
+  name: string;
+  category: string;
+  cartoucheTitle: string;
+  orgName: string;
+  logoType: string;
+  customImage: string | null;
+  hasVegetation: boolean;
+  hasBorderGrid: boolean;
+  vegetationStyle: "classic" | "dense" | "minimal";
+  borderStyle: "simple" | "grid" | "technical";
+  notes: string;
+  scaleText: string;
+  northArrowType: "classic" | "modern" | "compass";
+  createdAt: string;
+}
+
 interface DatabaseSchema {
   projects: Project[];
   projections: Projection[];
@@ -341,6 +359,7 @@ interface DatabaseSchema {
   users: AppUser[];
   logs: { timestamp: string; action: string; user: string }[];
   adminSettings?: AdminSettings;
+  templates?: PlanTemplate[];
 }
 
 const defaultAdminSettings: AdminSettings = {
@@ -579,6 +598,64 @@ const getDb = (): DatabaseSchema => {
       db.adminSettings.mysqlDatabase = "Geomadina";
       fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf8");
     }
+
+    if (!db.templates || db.templates.length === 0) {
+      db.templates = [
+        {
+          id: "tmpl_classic",
+          name: "Modèle National Classique - ANCFCC",
+          category: "Cadastral",
+          cartoucheTitle: "PLAN DE REPERAGE / BORNAGE",
+          orgName: "CABINET DE TOPOGRAPHIE BAHI NAJIB",
+          logoType: "bahi_najib",
+          customImage: null,
+          hasVegetation: true,
+          hasBorderGrid: true,
+          vegetationStyle: "classic",
+          borderStyle: "grid",
+          notes: "Plan de bornage certifié conforme. Établi pour délimitation de la propriété foncière.",
+          scaleText: "Échelle: 1/1000",
+          northArrowType: "classic",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "tmpl_modern",
+          name: "Modèle Urbain Moderne - ANEP",
+          category: "Situation",
+          cartoucheTitle: "PLAN DE SITUATION AUTOMATIQUE",
+          orgName: "AGENCE NATIONALE DE L'EQUIPEMENT (ANEP)",
+          logoType: "anep",
+          customImage: null,
+          hasVegetation: true,
+          hasBorderGrid: true,
+          vegetationStyle: "minimal",
+          borderStyle: "technical",
+          notes: "Province de Rabat. Commune Urbaine d'Agdal-Ryad. Secteur résidentiel.",
+          scaleText: "Échelle: 1/2000",
+          northArrowType: "modern",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "tmpl_tgcc",
+          name: "Modèle Industriel TGCC - Chantier & Génie Civil",
+          category: "Voirie",
+          cartoucheTitle: "PLAN DE RECOLEMENT RESEAUX & VOIRIES",
+          orgName: "ENTREPRISE TGCC (TRAVAUX GENERAUX DE CASABLANCA)",
+          logoType: "tgcc",
+          customImage: null,
+          hasVegetation: false,
+          hasBorderGrid: true,
+          vegetationStyle: "minimal",
+          borderStyle: "simple",
+          notes: "Chantier de construction du Stade Al Barid. Rabat.",
+          scaleText: "Échelle: 1/500",
+          northArrowType: "compass",
+          createdAt: new Date().toISOString()
+        }
+      ];
+      fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf8");
+    }
+
     return db;
   } catch (error) {
     console.error("Error reading JSON database, returning initial structure:", error);
@@ -1022,6 +1099,100 @@ app.get("/api/auth/user/:email", (req, res) => {
       role: isAdminEmail(user.email) ? "Admin" : "Surveyor"
     }
   });
+});
+
+// --- PLAN TEMPLATES API ---
+app.get("/api/templates", (req, res) => {
+  const db = getDb();
+  res.json(db.templates || []);
+});
+
+app.post("/api/templates", (req, res) => {
+  const db = getDb();
+  if (!db.templates) db.templates = [];
+
+  const {
+    id,
+    name,
+    category,
+    cartoucheTitle,
+    orgName,
+    logoType,
+    customImage,
+    hasVegetation,
+    hasBorderGrid,
+    vegetationStyle,
+    borderStyle,
+    notes,
+    scaleText,
+    northArrowType
+  } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: "Nom du modèle de plan requis." });
+  }
+
+  const existingIndex = id ? db.templates.findIndex(t => t.id === id) : -1;
+
+  if (existingIndex !== -1) {
+    // Update existing template
+    db.templates[existingIndex] = {
+      ...db.templates[existingIndex],
+      name,
+      category: category || "all",
+      cartoucheTitle: cartoucheTitle || "PLAN DE TRAVAUX",
+      orgName: orgName || "SOCIÉTÉ TOPOGRAPHIQUE",
+      logoType: logoType || "custom",
+      customImage: customImage || db.templates[existingIndex].customImage,
+      hasVegetation: hasVegetation !== undefined ? !!hasVegetation : true,
+      hasBorderGrid: hasBorderGrid !== undefined ? !!hasBorderGrid : true,
+      vegetationStyle: vegetationStyle || "classic",
+      borderStyle: borderStyle || "grid",
+      notes: notes || "",
+      scaleText: scaleText || "1/1000",
+      northArrowType: northArrowType || "classic"
+    };
+    saveDb(db);
+    logAction(`Mis à jour le modèle de plan: ${name}`);
+    res.json(db.templates[existingIndex]);
+  } else {
+    // Create new template
+    const newTemplate: PlanTemplate = {
+      id: "tmpl_" + Date.now(),
+      name,
+      category: category || "all",
+      cartoucheTitle: cartoucheTitle || "PLAN DE TRAVAUX",
+      orgName: orgName || "SOCIÉTÉ TOPOGRAPHIQUE",
+      logoType: logoType || "custom",
+      customImage: customImage || null,
+      hasVegetation: hasVegetation !== undefined ? !!hasVegetation : true,
+      hasBorderGrid: hasBorderGrid !== undefined ? !!hasBorderGrid : true,
+      vegetationStyle: vegetationStyle || "classic",
+      borderStyle: borderStyle || "grid",
+      notes: notes || "",
+      scaleText: scaleText || "1/1000",
+      northArrowType: northArrowType || "classic",
+      createdAt: new Date().toISOString()
+    };
+    db.templates.push(newTemplate);
+    saveDb(db);
+    logAction(`Créé le nouveau modèle de plan: ${name}`);
+    res.json(newTemplate);
+  }
+});
+
+app.delete("/api/templates/:id", (req, res) => {
+  const db = getDb();
+  if (!db.templates) db.templates = [];
+  const index = db.templates.findIndex(t => t.id === req.params.id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Modèle de plan introuvable." });
+  }
+
+  const deleted = db.templates.splice(index, 1)[0];
+  saveDb(db);
+  logAction(`Supprimé le modèle de plan: ${deleted.name}`);
+  res.json({ success: true, message: `Modèle ${deleted.name} supprimé.` });
 });
 
 // --- ADMIN USERS CONTROL ---
